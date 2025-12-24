@@ -7,6 +7,38 @@
     <!-- Importar fuente Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" type="image/svg+xml" href="escudo.svg?v=2" sizes="any" id="favicon">
+    <title>Madagascar Trophy Room</title>
+    <script>
+        // Función para ajustar el favicon según el tema del navegador (claro/oscuro)
+        function updateFavicon() {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const favicon = document.getElementById('favicon');
+            
+            // Si es modo claro, invertimos el color del escudo (que es blanco) para que sea negro
+            if (!isDark) {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64;
+                    canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    ctx.filter = 'invert(1) brightness(0)'; // Forzar a negro puro
+                    ctx.drawImage(img, 0, 0, 64, 64);
+                    favicon.href = canvas.toDataURL('image/png');
+                };
+                img.src = 'escudo.svg';
+            } else {
+                // En modo oscuro, usamos el original (blanco)
+                favicon.href = 'escudo.svg?v=2';
+            }
+        }
+        
+        // Ejecutar al cargar y cuando cambie el tema
+        updateFavicon();
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateFavicon);
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <!-- Iconos Phosphor -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -813,7 +845,7 @@
     <div id="landing-page">
         <nav>
             <div class="logo">
-                <i class="ph-fill ph-trophy"></i>
+                <img src="escudo.svg" alt="Logo Madagascar" width="32" height="32" style="vertical-align:middle;">              
                 <span>Madagascar FC</span>
             </div>
             <div class="nav-actions">
