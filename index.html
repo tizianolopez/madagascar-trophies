@@ -1349,12 +1349,17 @@
                     }
                 });
 
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if(session && session.user) {
-                    await hydrateUserSession(session);
-                    goToDashboardIfNeeded();
-                } else {
-                    // No session: this tab should start on landing
+                try {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if(session && session.user) {
+                        await hydrateUserSession(session);
+                        goToDashboardIfNeeded();
+                    } else {
+                        // No session: this tab should start on landing
+                        showLandingInstant();
+                    }
+                } catch (err) {
+                    console.warn('Initial getSession failed, starting on landing:', err);
                     showLandingInstant();
                 }
             }
@@ -1363,6 +1368,11 @@
         async function logout() {
             if(logoutInProgress) return;
             logoutInProgress = true;
+
+            // Failsafe: nunca dejar la UI bloqueada por este flag.
+            const logoutFailsafe = setTimeout(() => {
+                logoutInProgress = false;
+            }, 2000);
 
             // Cancel any pending login transition
             if(switchPageTimer) {
@@ -1436,22 +1446,35 @@
                 // Clean inline transition overrides
                 dash.style.opacity = '';
                 dash.style.transform = '';
-    
+
+                clearTimeout(logoutFailsafe);
                 logoutInProgress = false;
             }, 600);
         }
 
         // --- NAVIGATION & AUTH UI ---
         async function openLogin() { 
-            if(supabaseClient) {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if(session && session.user) {
-                    switchPage('dashboard');
-                    return;
-                }
+            // Si hay un overlay “fantasma” bloqueando clicks, lo reseteamos antes.
+            const loginView = document.getElementById('login-view');
+            if(loginView) {
+                loginView.style.opacity = '';
             }
+
+            // Intentar detectar sesión real, pero NUNCA bloquear la apertura del modal si falla.
+            try {
+                if(supabaseClient) {
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if(session && session.user) {
+                        switchPage('dashboard');
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.warn('getSession failed, opening login modal anyway:', err);
+            }
+
             document.body.classList.add('modal-open');
-            document.getElementById('login-view').classList.add('active'); 
+            if(loginView) loginView.classList.add('active');
         }
 
         function toggleFlip() {
