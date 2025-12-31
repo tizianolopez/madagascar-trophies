@@ -1,5 +1,5 @@
 -- ============================================
--- MADAGASCAR FC - SUPABASE DATABASE SCHEMA
+-- MADAGASCAR FC - SUPABASE DATABASE SCHEMA (FIXED)
 -- ============================================
 -- Ejecuta este script completo en tu panel de Supabase:
 -- 1. Ve a tu proyecto en supabase.com
@@ -9,7 +9,7 @@
 -- ============================================
 
 -- ============================================
--- TABLA: user_progress (ya la tienes, verificamos)
+-- TABLA: user_progress
 -- ============================================
 create table if not exists public.user_progress (
     user_id uuid primary key references auth.users(id) on delete cascade,
@@ -19,18 +19,16 @@ create table if not exists public.user_progress (
 
 alter table public.user_progress enable row level security;
 
--- Políticas (por si no existen)
 DO $$ 
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'select_own_progress' AND tablename = 'user_progress') THEN
-        CREATE POLICY select_own_progress ON public.user_progress FOR SELECT USING (auth.uid() = user_id);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'insert_own_progress' AND tablename = 'user_progress') THEN
-        CREATE POLICY insert_own_progress ON public.user_progress FOR INSERT WITH CHECK (auth.uid() = user_id);
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'update_own_progress' AND tablename = 'user_progress') THEN
-        CREATE POLICY update_own_progress ON public.user_progress FOR UPDATE USING (auth.uid() = user_id);
-    END IF;
+    EXECUTE 'DROP POLICY IF EXISTS "select_own_progress" ON public.user_progress';
+    EXECUTE 'CREATE POLICY "select_own_progress" ON public.user_progress FOR SELECT USING (auth.uid() = user_id)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "insert_own_progress" ON public.user_progress';
+    EXECUTE 'CREATE POLICY "insert_own_progress" ON public.user_progress FOR INSERT WITH CHECK (auth.uid() = user_id)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "update_own_progress" ON public.user_progress';
+    EXECUTE 'CREATE POLICY "update_own_progress" ON public.user_progress FOR UPDATE USING (auth.uid() = user_id)';
 END $$;
 
 -- ============================================
@@ -38,39 +36,38 @@ END $$;
 -- ============================================
 create table if not exists public.players (
     id uuid primary key default gen_random_uuid(),
-    name text not null,
+    name text not null unique,  -- UNIQUE for upsert from Meiland
     nickname text,
     jersey_number integer,
     position text check (position in ('Portero', 'Defensa', 'Centrocampista', 'Delantero')),
     is_active boolean default true,
     photo_url text,
+    -- Aggregate stats from Meiland
+    games_played integer default 0,
+    goals integer default 0,
+    assists integer default 0,
+    yellow_cards integer default 0,
+    red_cards integer default 0,
     created_at timestamptz default now(),
     updated_at timestamptz default now()
 );
 
 alter table public.players enable row level security;
 
--- Todos los usuarios autenticados pueden ver jugadores
-create policy if not exists "players_select_authenticated" 
-    on public.players for select 
-    to authenticated 
-    using (true);
-
--- Cualquier autenticado puede insertar/actualizar/borrar (para el equipo)
-create policy if not exists "players_insert_authenticated" 
-    on public.players for insert 
-    to authenticated 
-    with check (true);
-
-create policy if not exists "players_update_authenticated" 
-    on public.players for update 
-    to authenticated 
-    using (true);
-
-create policy if not exists "players_delete_authenticated" 
-    on public.players for delete 
-    to authenticated 
-    using (true);
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "players_select_authenticated" ON public.players';
+    EXECUTE 'CREATE POLICY "players_select_authenticated" ON public.players FOR SELECT TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "players_insert_authenticated" ON public.players';
+    EXECUTE 'CREATE POLICY "players_insert_authenticated" ON public.players FOR INSERT TO authenticated WITH CHECK (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "players_update_authenticated" ON public.players';
+    EXECUTE 'CREATE POLICY "players_update_authenticated" ON public.players FOR UPDATE TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "players_delete_authenticated" ON public.players';
+    EXECUTE 'CREATE POLICY "players_delete_authenticated" ON public.players FOR DELETE TO authenticated USING (true)';
+END $$;
 
 -- ============================================
 -- TABLA: matches (Partidos)
@@ -87,30 +84,27 @@ create table if not exists public.matches (
     goals_against integer,
     notes text,
     created_at timestamptz default now(),
-    updated_at timestamptz default now()
+    updated_at timestamptz default now(),
+    -- UNIQUE constraint for upsert from Meiland
+    unique(match_date, opponent)
 );
 
 alter table public.matches enable row level security;
 
-create policy if not exists "matches_select_authenticated" 
-    on public.matches for select 
-    to authenticated 
-    using (true);
-
-create policy if not exists "matches_insert_authenticated" 
-    on public.matches for insert 
-    to authenticated 
-    with check (true);
-
-create policy if not exists "matches_update_authenticated" 
-    on public.matches for update 
-    to authenticated 
-    using (true);
-
-create policy if not exists "matches_delete_authenticated" 
-    on public.matches for delete 
-    to authenticated 
-    using (true);
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "matches_select_authenticated" ON public.matches';
+    EXECUTE 'CREATE POLICY "matches_select_authenticated" ON public.matches FOR SELECT TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "matches_insert_authenticated" ON public.matches';
+    EXECUTE 'CREATE POLICY "matches_insert_authenticated" ON public.matches FOR INSERT TO authenticated WITH CHECK (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "matches_update_authenticated" ON public.matches';
+    EXECUTE 'CREATE POLICY "matches_update_authenticated" ON public.matches FOR UPDATE TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "matches_delete_authenticated" ON public.matches';
+    EXECUTE 'CREATE POLICY "matches_delete_authenticated" ON public.matches FOR DELETE TO authenticated USING (true)';
+END $$;
 
 -- ============================================
 -- TABLA: player_stats (Estadísticas por partido)
@@ -131,32 +125,27 @@ create table if not exists public.player_stats (
 
 alter table public.player_stats enable row level security;
 
-create policy if not exists "player_stats_select_authenticated" 
-    on public.player_stats for select 
-    to authenticated 
-    using (true);
-
-create policy if not exists "player_stats_insert_authenticated" 
-    on public.player_stats for insert 
-    to authenticated 
-    with check (true);
-
-create policy if not exists "player_stats_update_authenticated" 
-    on public.player_stats for update 
-    to authenticated 
-    using (true);
-
-create policy if not exists "player_stats_delete_authenticated" 
-    on public.player_stats for delete 
-    to authenticated 
-    using (true);
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "player_stats_select_authenticated" ON public.player_stats';
+    EXECUTE 'CREATE POLICY "player_stats_select_authenticated" ON public.player_stats FOR SELECT TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "player_stats_insert_authenticated" ON public.player_stats';
+    EXECUTE 'CREATE POLICY "player_stats_insert_authenticated" ON public.player_stats FOR INSERT TO authenticated WITH CHECK (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "player_stats_update_authenticated" ON public.player_stats';
+    EXECUTE 'CREATE POLICY "player_stats_update_authenticated" ON public.player_stats FOR UPDATE TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "player_stats_delete_authenticated" ON public.player_stats';
+    EXECUTE 'CREATE POLICY "player_stats_delete_authenticated" ON public.player_stats FOR DELETE TO authenticated USING (true)';
+END $$;
 
 -- ============================================
 -- TABLA: standings (Clasificación de la liga)
 -- ============================================
 create table if not exists public.standings (
     id uuid primary key default gen_random_uuid(),
-    team_name text not null,
+    team_name text not null unique,  -- UNIQUE for upsert from Meiland
     position integer not null,
     matches_played integer default 0,
     wins integer default 0,
@@ -167,20 +156,19 @@ create table if not exists public.standings (
     goal_difference integer generated always as (goals_for - goals_against) stored,
     points integer default 0,
     season text default '2024-25',
-    updated_at timestamptz default now()
+    updated_at timestamptz not null default now()
 );
 
 alter table public.standings enable row level security;
 
-create policy if not exists "standings_select_authenticated" 
-    on public.standings for select 
-    to authenticated 
-    using (true);
-
-create policy if not exists "standings_all_authenticated" 
-    on public.standings for all
-    to authenticated 
-    using (true);
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "standings_select_authenticated" ON public.standings';
+    EXECUTE 'CREATE POLICY "standings_select_authenticated" ON public.standings FOR SELECT TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "standings_all_authenticated" ON public.standings';
+    EXECUTE 'CREATE POLICY "standings_all_authenticated" ON public.standings FOR ALL TO authenticated USING (true)';
+END $$;
 
 -- ============================================
 -- TABLA: announcements (Anuncios del equipo)
@@ -197,20 +185,17 @@ create table if not exists public.announcements (
 
 alter table public.announcements enable row level security;
 
-create policy if not exists "announcements_select_authenticated" 
-    on public.announcements for select 
-    to authenticated 
-    using (true);
-
-create policy if not exists "announcements_insert_authenticated" 
-    on public.announcements for insert 
-    to authenticated 
-    with check (true);
-
-create policy if not exists "announcements_delete_own" 
-    on public.announcements for delete 
-    to authenticated 
-    using (auth.uid() = created_by);
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "announcements_select_authenticated" ON public.announcements';
+    EXECUTE 'CREATE POLICY "announcements_select_authenticated" ON public.announcements FOR SELECT TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "announcements_insert_authenticated" ON public.announcements';
+    EXECUTE 'CREATE POLICY "announcements_insert_authenticated" ON public.announcements FOR INSERT TO authenticated WITH CHECK (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "announcements_delete_own" ON public.announcements';
+    EXECUTE 'CREATE POLICY "announcements_delete_own" ON public.announcements FOR DELETE TO authenticated USING (auth.uid() = created_by)';
+END $$;
 
 -- ============================================
 -- TABLA: activity_feed (Feed de actividad)
@@ -228,15 +213,14 @@ create table if not exists public.activity_feed (
 
 alter table public.activity_feed enable row level security;
 
-create policy if not exists "activity_feed_select_authenticated" 
-    on public.activity_feed for select 
-    to authenticated 
-    using (true);
-
-create policy if not exists "activity_feed_insert_authenticated" 
-    on public.activity_feed for insert 
-    to authenticated 
-    with check (true);
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "activity_feed_select_authenticated" ON public.activity_feed';
+    EXECUTE 'CREATE POLICY "activity_feed_select_authenticated" ON public.activity_feed FOR SELECT TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "activity_feed_insert_authenticated" ON public.activity_feed';
+    EXECUTE 'CREATE POLICY "activity_feed_insert_authenticated" ON public.activity_feed FOR INSERT TO authenticated WITH CHECK (true)';
+END $$;
 
 -- ============================================
 -- TABLA: glagascar_settings (Configuración Glagascar)
@@ -254,15 +238,14 @@ create table if not exists public.glagascar_settings (
 
 alter table public.glagascar_settings enable row level security;
 
-create policy if not exists "glagascar_settings_select_authenticated" 
-    on public.glagascar_settings for select 
-    to authenticated 
-    using (true);
-
-create policy if not exists "glagascar_settings_all_authenticated" 
-    on public.glagascar_settings for all
-    to authenticated 
-    using (true);
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "glagascar_settings_select_authenticated" ON public.glagascar_settings';
+    EXECUTE 'CREATE POLICY "glagascar_settings_select_authenticated" ON public.glagascar_settings FOR SELECT TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "glagascar_settings_all_authenticated" ON public.glagascar_settings';
+    EXECUTE 'CREATE POLICY "glagascar_settings_all_authenticated" ON public.glagascar_settings FOR ALL TO authenticated USING (true)';
+END $$;
 
 -- Insertar configuración por defecto
 INSERT INTO public.glagascar_settings (edition_year, ceremony_date, voting_open)
@@ -284,20 +267,17 @@ create table if not exists public.glagascar_categories (
 
 alter table public.glagascar_categories enable row level security;
 
-create policy if not exists "glagascar_categories_select_authenticated" 
-    on public.glagascar_categories for select 
-    to authenticated 
-    using (true);
-
-create policy if not exists "glagascar_categories_insert_authenticated" 
-    on public.glagascar_categories for insert 
-    to authenticated 
-    with check (true);
-
-create policy if not exists "glagascar_categories_update_authenticated" 
-    on public.glagascar_categories for update 
-    to authenticated 
-    using (true);
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "glagascar_categories_select_authenticated" ON public.glagascar_categories';
+    EXECUTE 'CREATE POLICY "glagascar_categories_select_authenticated" ON public.glagascar_categories FOR SELECT TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "glagascar_categories_insert_authenticated" ON public.glagascar_categories';
+    EXECUTE 'CREATE POLICY "glagascar_categories_insert_authenticated" ON public.glagascar_categories FOR INSERT TO authenticated WITH CHECK (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "glagascar_categories_update_authenticated" ON public.glagascar_categories';
+    EXECUTE 'CREATE POLICY "glagascar_categories_update_authenticated" ON public.glagascar_categories FOR UPDATE TO authenticated USING (true)';
+END $$;
 
 -- ============================================
 -- TABLA: glagascar_nominations (Nominaciones)
@@ -313,15 +293,14 @@ create table if not exists public.glagascar_nominations (
 
 alter table public.glagascar_nominations enable row level security;
 
-create policy if not exists "glagascar_nominations_select_authenticated" 
-    on public.glagascar_nominations for select 
-    to authenticated 
-    using (true);
-
-create policy if not exists "glagascar_nominations_insert_authenticated" 
-    on public.glagascar_nominations for insert 
-    to authenticated 
-    with check (true);
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "glagascar_nominations_select_authenticated" ON public.glagascar_nominations';
+    EXECUTE 'CREATE POLICY "glagascar_nominations_select_authenticated" ON public.glagascar_nominations FOR SELECT TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "glagascar_nominations_insert_authenticated" ON public.glagascar_nominations';
+    EXECUTE 'CREATE POLICY "glagascar_nominations_insert_authenticated" ON public.glagascar_nominations FOR INSERT TO authenticated WITH CHECK (true)';
+END $$;
 
 -- ============================================
 -- TABLA: glagascar_votes (Votos)
@@ -331,20 +310,19 @@ create table if not exists public.glagascar_votes (
     nomination_id uuid references public.glagascar_nominations(id) on delete cascade,
     user_id uuid references auth.users(id) on delete cascade,
     created_at timestamptz default now(),
-    unique(nomination_id, user_id)  -- Un usuario = un voto por nominación
+    unique(nomination_id, user_id)
 );
 
 alter table public.glagascar_votes enable row level security;
 
-create policy if not exists "glagascar_votes_select_authenticated" 
-    on public.glagascar_votes for select 
-    to authenticated 
-    using (true);
-
-create policy if not exists "glagascar_votes_insert_authenticated" 
-    on public.glagascar_votes for insert 
-    to authenticated 
-    with check (auth.uid() = user_id);
+DO $$ 
+BEGIN
+    EXECUTE 'DROP POLICY IF EXISTS "glagascar_votes_select_authenticated" ON public.glagascar_votes';
+    EXECUTE 'CREATE POLICY "glagascar_votes_select_authenticated" ON public.glagascar_votes FOR SELECT TO authenticated USING (true)';
+    
+    EXECUTE 'DROP POLICY IF EXISTS "glagascar_votes_insert_authenticated" ON public.glagascar_votes';
+    EXECUTE 'CREATE POLICY "glagascar_votes_insert_authenticated" ON public.glagascar_votes FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id)';
+END $$;
 
 -- ============================================
 -- ÍNDICES PARA RENDIMIENTO
@@ -359,6 +337,5 @@ create index if not exists idx_glagascar_votes_nomination on public.glagascar_vo
 
 -- ============================================
 -- ¡LISTO! 
--- Tu base de datos está configurada.
--- Ahora ve a tu app y disfruta de Madagascar FC 🦁
+-- Tu base de datos está configurada correctamente.
 -- ============================================

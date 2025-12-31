@@ -563,6 +563,90 @@
             transform: scale(0.98);
         }
 
+        /* Sync Button */
+        .btn-sync {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-sync:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-sync.syncing {
+            color: #9b59b6;
+            pointer-events: none;
+        }
+
+        .btn-sync.syncing .ph-arrows-clockwise {
+            animation: spin 1s linear infinite;
+        }
+
+        .btn-sync.success {
+            color: #2ecc71;
+            border-color: rgba(46, 204, 113, 0.3);
+        }
+
+        .btn-sync.error {
+            color: #e74c3c;
+            border-color: rgba(231, 76, 60, 0.3);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast-notification {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(30, 30, 40, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast-notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast-success i { color: #2ecc71; }
+        .toast-error i { color: #e74c3c; }
+
+        @media (max-width: 768px) {
+            .toast-notification {
+                bottom: 80px;
+                width: calc(100% - 40px);
+                max-width: 400px;
+            }
+        }
+
         .login-footer {
             text-align: center;
             margin-top: auto;
@@ -2051,9 +2135,15 @@
         <main class="main-content">
             <!-- PAGE: Home -->
             <div id="page-home" class="page active">
-                <div class="page-header">
-                    <h2>🏠 Home</h2>
-                    <p>Bienvenido a MadagascarFC</p>
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h2>🏠 Home</h2>
+                        <p>Bienvenido a MadagascarFC</p>
+                    </div>
+                    <button class="btn-sync" onclick="syncWithMeiland()" title="Sincronizar con Liga Meiland">
+                        <i class="ph-bold ph-arrows-clockwise" id="sync-icon"></i>
+                        <span id="sync-status">Sync</span>
+                    </button>
                 </div>
                 <div id="home-content">
                     <div class="card">
@@ -2066,7 +2156,12 @@
             <div id="page-trophies" class="page">
                 <div class="page-header">
                     <h2>🏆 Trophy Room</h2>
-                    <p id="trophies-progress">Cargando progreso...</p>
+                    <div class="progress-container" style="margin-top: 8px;">
+                        <span class="progress-label" id="trophies-progress">0% Completado</span>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="trophies-progress-fill"></div>
+                        </div>
+                    </div>
                 </div>
                 <div id="trophies-content"></div>
             </div>
@@ -2316,33 +2411,6 @@
                 </div>
             </div>
 
-        </div>
-    </div>
-
-    <!-- === DASHBOARD PAGE === -->
-    <div id="dashboard-page" class="hidden">
-        <div class="dashboard-header">
-            <div class="header-left">
-                <button class="btn-exit" onclick="logout()">
-                    <i class="ph-bold ph-caret-left"></i>
-                </button>
-
-                <div class="user-info">
-                    <h2>Colección</h2>
-                    <p id="user-badge"><i class="ph-fill ph-user-circle"></i> <span id="user-identity">Jugador
-                            Titular</span> • <span id="user-season">Season 25/26</span></p>
-                </div>
-            </div>
-            <div class="progress-container">
-                <span class="progress-label" id="progress-text">0% Completado</span>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" id="progress-fill"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="trophies-wrapper">
-            <!-- Trophies injected via JS -->
         </div>
     </div>
 
@@ -2651,6 +2719,95 @@
                 </div>
             `;
             loadHomeData();
+        }
+
+        // =============================
+        // MEILAND SYNC
+        // =============================
+        async function syncWithMeiland() {
+            const btn = document.querySelector('.btn-sync');
+            const statusEl = document.getElementById('sync-status');
+            
+            if (!btn || btn.classList.contains('syncing')) return;
+
+            btn.classList.remove('success', 'error');
+            btn.classList.add('syncing');
+            statusEl.textContent = 'Sincronizando...';
+
+            try {
+                // Call the Edge Function
+                const response = await fetch(
+                    `${SUPABASE_URL}/functions/v1/sync-meiland`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${SUPABASE_KEY}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    btn.classList.remove('syncing');
+                    btn.classList.add('success');
+                    statusEl.textContent = '✓ Sync OK';
+                    
+                    // Refresh all data
+                    loadHomeData();
+                    loadStatsData();
+                    loadCalendarData();
+                    
+                    // Show success notification
+                    showToast(`Sincronizado: ${result.data.players} jugadores, ${result.data.standings} equipos, ${result.data.matches} partidos`);
+                    
+                    // Reset button after 3 seconds
+                    setTimeout(() => {
+                        btn.classList.remove('success');
+                        statusEl.textContent = 'Sync';
+                    }, 3000);
+                } else {
+                    throw new Error(result.error || 'Sync failed');
+                }
+            } catch (err) {
+                console.error('Meiland sync error:', err);
+                btn.classList.remove('syncing');
+                btn.classList.add('error');
+                statusEl.textContent = '✗ Error';
+                
+                // For now, show manual sync option since Edge Function may not be deployed
+                showToast('Para sincronizar, despliega primero la Edge Function de Supabase', 'error');
+                
+                setTimeout(() => {
+                    btn.classList.remove('error');
+                    statusEl.textContent = 'Sync';
+                }, 3000);
+            }
+        }
+
+        // Simple toast notification
+        function showToast(message, type = 'success') {
+            // Remove existing toast
+            const existingToast = document.querySelector('.toast-notification');
+            if (existingToast) existingToast.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+            toast.innerHTML = `
+                <i class="ph-fill ${type === 'success' ? 'ph-check-circle' : 'ph-warning-circle'}"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => toast.classList.add('show'), 10);
+
+            // Remove after 4 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         }
 
         async function loadHomeData() {
@@ -3989,7 +4146,9 @@
             cloudSaveTimer = setTimeout(() => {
                 const snapshot = JSON.parse(JSON.stringify(userProgress));
                 lastCloudSavePromise = lastCloudSavePromise
-                    .catch(() => undefined)
+                    .catch((
+                
+                    ) => undefined)
                     .then(() => saveCloudProgress(currentUserId, snapshot))
                     .catch((err) => console.warn('Cloud save failed:', err.message));
             }, 250);
@@ -4047,22 +4206,26 @@
             const loginView = document.getElementById('login-view');
             if (loginView && loginView.classList.contains('active')) return;
 
+            const shell = document.getElementById('app-shell');
             const landing = document.getElementById('landing-page');
-            const dash = document.getElementById('dashboard-page');
-            if (!landing || !dash) return;
+            if (!landing || !shell) return;
 
             // If animation is already playing (fade-out present), let it finish.
             if (landing.classList.contains('fade-out')) return;
 
-            if (!dash.classList.contains('hidden')) {
-                renderDashboard();
+            // Already showing app shell
+            if (!shell.classList.contains('hidden')) {
                 return;
             }
 
             // Check if we should animate (e.g. returning from Google Login)
             if (sessionStorage.getItem('madagascar_login_transition') === 'true') {
                 sessionStorage.removeItem('madagascar_login_transition');
-                switchPage('dashboard');
+                // Animate transition
+                landing.classList.add('fade-out');
+                setTimeout(() => {
+                    showDashboardInstant();
+                }, 800);
             } else {
                 // On refresh / existing session, skip the landing animation.
                 showDashboardInstant();
@@ -4395,8 +4558,8 @@
         function renderDashboard() {
             checkPlatinum(true);
 
-            // Use new trophies-content container, fallback to old trophies-wrapper
-            const wrapper = document.getElementById('trophies-content') || document.getElementById('trophies-wrapper');
+            const wrapper = document.getElementById('trophies-content');
+            if (!wrapper) return;
             if (!wrapper) return;
             wrapper.innerHTML = '';
 
@@ -4404,17 +4567,15 @@
             const unlockedCount = trophiesNoPlat.filter(t => userProgress[t.id]).length;
             const percent = Math.floor((unlockedCount / trophiesNoPlat.length) * 100);
 
-            // Update progress in new location
+            // Update progress in new location (Trophy Room page)
             const progressText = document.getElementById('trophies-progress');
+            const progressFill = document.getElementById('trophies-progress-fill');
             if (progressText) {
                 progressText.textContent = `${percent}% Completado (${unlockedCount}/${trophiesNoPlat.length} trofeos)`;
             }
-
-            // Old progress bar (keep for compatibility)
-            const oldProgressText = document.getElementById('progress-text');
-            const oldProgressFill = document.getElementById('progress-fill');
-            if (oldProgressText) oldProgressText.innerText = `${percent}% Completado`;
-            if (oldProgressFill) oldProgressFill.style.width = `${percent}%`;
+            if (progressFill) {
+                progressFill.style.width = `${percent}%`;
+            }
 
             const categories = [...new Set(trophyData.map(t => t.category))];
 
