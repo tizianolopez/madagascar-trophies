@@ -22,7 +22,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="icon" type="image/svg+xml" href="escudo.svg?v=2" sizes="any" id="favicon">
-
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="theme-color" content="#8e44ad">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
     <!-- Iconos Phosphor -->
@@ -1573,6 +1575,418 @@
             opacity: 1;
             pointer-events: all;
         }
+
+        /* ============================
+           APP SHELL - SIDEBAR & BOTTOM NAV
+           ============================ */
+        
+        /* Main App Container */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar (Desktop) */
+        .sidebar {
+            width: 260px;
+            background: var(--surface-color);
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-header img {
+            width: 40px;
+            height: 40px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: none;
+            -webkit-text-fill-color: white;
+            margin: 0;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 12px;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 4px;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-main);
+        }
+
+        .nav-item.active {
+            background: rgba(142, 68, 173, 0.2);
+            color: var(--accent-glow);
+        }
+
+        .nav-item i {
+            font-size: 1.3rem;
+        }
+
+        .nav-item span {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .nav-divider {
+            height: 1px;
+            background: var(--border-light);
+            margin: 16px 0;
+        }
+
+        .sidebar-footer {
+            padding: 16px 12px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+
+        /* Bottom Navigation (Mobile) */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(18, 18, 20, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-light);
+            z-index: 100;
+            padding: 8px 0;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+        }
+
+        .bottom-nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s;
+            text-decoration: none;
+        }
+
+        .bottom-nav-item.active {
+            color: var(--accent-glow);
+        }
+
+        .bottom-nav-item i {
+            font-size: 1.5rem;
+        }
+
+        .bottom-nav-item span {
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        /* Page containers */
+        .page {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeInPage 0.3s ease;
+        }
+
+        @keyframes fadeInPage {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .page-header h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Cards genéricos para todas las páginas */
+        .card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title i {
+            color: var(--accent-glow);
+        }
+
+        /* Responsive: Mobile */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding-bottom: 80px;
+            }
+
+            .bottom-nav {
+                display: block;
+            }
+
+            .page {
+                padding: 16px;
+            }
+        }
+
+        /* User Menu in Sidebar */
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent-violet);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-info-sidebar {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-info-sidebar .name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-info-sidebar .role {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Small button for cards */
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(142, 68, 173, 0.2);
+            color: var(--accent-glow);
+            border: 1px solid rgba(142, 68, 173, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-small:hover {
+            background: rgba(142, 68, 173, 0.3);
+        }
+
+        /* Data table styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .data-table th {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        /* Activity feed */
+        .activity-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(142, 68, 173, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .activity-icon i {
+            color: var(--accent-glow);
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-content p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+
+        .activity-content .time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Match card */
+        .match-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .match-teams {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .match-team {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .match-vs {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .match-info {
+            text-align: right;
+        }
+
+        .match-date {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .match-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .match-result {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .match-result.win { color: #2ecc71; }
+        .match-result.draw { color: #f39c12; }
+        .match-result.loss { color: #e74c3c; }
+
     </style>
 </head>
 
@@ -1580,6 +1994,149 @@
 
     <!-- Light Atmosphere (Global) -->
     <div class="ambient-light-top"></div>
+
+    <!-- ============================
+         APP SHELL (Solo visible cuando logueado)
+         ============================ -->
+    <div id="app-shell" class="hidden">
+        <!-- Sidebar (Desktop) -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="escudo.svg" alt="Madagascar FC">
+                <h1>MadagascarFC</h1>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a class="nav-item active" data-page="home" onclick="navigateTo('home')">
+                    <i class="ph-fill ph-house"></i>
+                    <span>Home</span>
+                </a>
+                <a class="nav-item" data-page="trophies" onclick="navigateTo('trophies')">
+                    <i class="ph-fill ph-trophy"></i>
+                    <span>Trophy Room</span>
+                </a>
+                <a class="nav-item" data-page="stats" onclick="navigateTo('stats')">
+                    <i class="ph-fill ph-chart-bar"></i>
+                    <span>Estadísticas</span>
+                </a>
+                <a class="nav-item" data-page="calendar" onclick="navigateTo('calendar')">
+                    <i class="ph-fill ph-calendar"></i>
+                    <span>Calendario</span>
+                </a>
+                <a class="nav-item" data-page="glagascar" onclick="navigateTo('glagascar')">
+                    <i class="ph-fill ph-mask-happy"></i>
+                    <span>Glagascar</span>
+                </a>
+                
+                <div class="nav-divider"></div>
+                
+                <a class="nav-item" onclick="logout()">
+                    <i class="ph ph-sign-out"></i>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-menu">
+                    <div class="user-avatar" id="sidebar-avatar">M</div>
+                    <div class="user-info-sidebar">
+                        <div class="name" id="sidebar-user-name">Jugador</div>
+                        <div class="role">Madagascar FC</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- PAGE: Home -->
+            <div id="page-home" class="page active">
+                <div class="page-header">
+                    <h2>🏠 Home</h2>
+                    <p>Bienvenido a MadagascarFC</p>
+                </div>
+                <div id="home-content">
+                    <div class="card">
+                        <div class="card-title"><i class="ph-fill ph-spinner"></i> Cargando...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: Trophies -->
+            <div id="page-trophies" class="page">
+                <div class="page-header">
+                    <h2>🏆 Trophy Room</h2>
+                    <p id="trophies-progress">Cargando progreso...</p>
+                </div>
+                <div id="trophies-content"></div>
+            </div>
+
+            <!-- PAGE: Stats -->
+            <div id="page-stats" class="page">
+                <div class="page-header">
+                    <h2>📊 Estadísticas</h2>
+                    <p>Goles, asistencias y partidos jugados</p>
+                </div>
+                <div id="stats-content">
+                    <div class="card">
+                        <div class="card-title"><i class="ph-fill ph-spinner"></i> Cargando...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: Calendar -->
+            <div id="page-calendar" class="page">
+                <div class="page-header">
+                    <h2>📅 Calendario</h2>
+                    <p>Partidos y clasificación</p>
+                </div>
+                <div id="calendar-content">
+                    <div class="card">
+                        <div class="card-title"><i class="ph-fill ph-spinner"></i> Cargando...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PAGE: Glagascar -->
+            <div id="page-glagascar" class="page">
+                <div class="page-header">
+                    <h2>🎭 Road to Glagascar</h2>
+                    <p>La gala anual de premios</p>
+                </div>
+                <div id="glagascar-content">
+                    <div class="card">
+                        <div class="card-title"><i class="ph-fill ph-spinner"></i> Cargando...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation (Mobile) -->
+        <nav class="bottom-nav">
+            <div class="bottom-nav-items">
+                <a class="bottom-nav-item active" data-page="home" onclick="navigateTo('home')">
+                    <i class="ph-fill ph-house"></i>
+                    <span>Home</span>
+                </a>
+                <a class="bottom-nav-item" data-page="trophies" onclick="navigateTo('trophies')">
+                    <i class="ph-fill ph-trophy"></i>
+                    <span>Trofeos</span>
+                </a>
+                <a class="bottom-nav-item" data-page="stats" onclick="navigateTo('stats')">
+                    <i class="ph-fill ph-chart-bar"></i>
+                    <span>Stats</span>
+                </a>
+                <a class="bottom-nav-item" data-page="calendar" onclick="navigateTo('calendar')">
+                    <i class="ph-fill ph-calendar"></i>
+                    <span>Calendario</span>
+                </a>
+                <a class="bottom-nav-item" data-page="glagascar" onclick="navigateTo('glagascar')">
+                    <i class="ph-fill ph-mask-happy"></i>
+                    <span>Glagascar</span>
+                </a>
+            </div>
+        </nav>
+    </div>
 
     <!-- === LANDING PAGE === -->
     <div id="landing-page">
@@ -1811,6 +2368,110 @@
         </div>
     </div>
 
+    <!-- === ANNOUNCEMENT MODAL === -->
+    <div class="modal-overlay" id="announcementModal" style="display: none;">
+        <div class="modal-card">
+            <h3><i class="ph-fill ph-megaphone"></i> Nuevo Anuncio</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Comparte algo con el equipo</p>
+
+            <div class="form-group">
+                <label>Título *</label>
+                <input type="text" id="announcement-title" class="form-input" placeholder="Ej: Entrenamiento cancelado">
+            </div>
+            <div class="form-group">
+                <label>Contenido (opcional)</label>
+                <textarea id="announcement-content" class="form-input" rows="3" placeholder="Detalles adicionales..."></textarea>
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="announcement-pinned" style="width: 18px; height: 18px;">
+                <label for="announcement-pinned" style="margin: 0; cursor: pointer;"><i class="ph-fill ph-push-pin" style="color: #ffd700;"></i> Fijar anuncio arriba</label>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-modal btn-cancel" onclick="closeAnnouncementModal()">Cancelar</button>
+                <button class="btn-modal btn-confirm" onclick="submitAnnouncement()">Publicar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- === PLAYER MODAL === -->
+    <div class="modal-overlay" id="playerModal" style="display: none;">
+        <div class="modal-card">
+            <h3><i class="ph-fill ph-user-plus"></i> Añadir Jugador</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Nuevo miembro del equipo</p>
+
+            <div class="form-group">
+                <label>Nombre completo *</label>
+                <input type="text" id="player-name" class="form-input" placeholder="Ej: Juan García López">
+            </div>
+            <div class="form-group">
+                <label>Apodo (opcional)</label>
+                <input type="text" id="player-nickname" class="form-input" placeholder="Ej: El Tigre">
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Dorsal</label>
+                    <input type="number" id="player-number" class="form-input" placeholder="10" min="1" max="99">
+                </div>
+                <div class="form-group" style="flex: 2;">
+                    <label>Posición</label>
+                    <select id="player-position" class="form-input">
+                        <option value="">Seleccionar...</option>
+                        <option value="Portero">Portero</option>
+                        <option value="Defensa">Defensa</option>
+                        <option value="Centrocampista">Centrocampista</option>
+                        <option value="Delantero">Delantero</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-modal btn-cancel" onclick="closePlayerModal()">Cancelar</button>
+                <button class="btn-modal btn-confirm" onclick="submitPlayer()">Añadir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- === MATCH MODAL === -->
+    <div class="modal-overlay" id="matchModal" style="display: none;">
+        <div class="modal-card">
+            <h3><i class="ph-fill ph-soccer-ball"></i> Añadir Partido</h3>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Programa un nuevo partido</p>
+
+            <div class="form-group">
+                <label>Rival *</label>
+                <input type="text" id="match-opponent" class="form-input" placeholder="Nombre del equipo rival">
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Fecha *</label>
+                    <input type="date" id="match-date" class="form-input">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Hora</label>
+                    <input type="time" id="match-time" class="form-input">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Ubicación</label>
+                <input type="text" id="match-location" class="form-input" placeholder="Ej: Campo Municipal Las Rozas">
+            </div>
+            <div class="form-group">
+                <label>Competición</label>
+                <input type="text" id="match-competition" class="form-input" placeholder="Ej: Liga Meiland, Copa, Amistoso">
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="match-is-home" checked style="width: 18px; height: 18px;">
+                <label for="match-is-home" style="margin: 0; cursor: pointer;">🏠 Jugamos en casa</label>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-modal btn-cancel" onclick="closeMatchModal()">Cancelar</button>
+                <button class="btn-modal btn-confirm" onclick="submitMatch()">Añadir Partido</button>
+            </div>
+        </div>
+    </div>
+
     <!-- === TOAST NOTIFICATION === -->
     <div class="toast" id="toast">
         <i class="ph-fill ph-trophy toast-icon"></i>
@@ -1862,6 +2523,1322 @@
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         } catch (e) {
             console.error("Supabase not initialized (check keys)");
+        }
+
+        // ==========================================
+        // APP ROUTER & NAVIGATION
+        // ==========================================
+        let currentPage = 'home';
+
+        function navigateTo(page) {
+            // Update current page
+            currentPage = page;
+
+            // Update URL without reload
+            history.pushState({ page }, '', `?page=${page}`);
+
+            // Update active states in navigation
+            document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.page === page);
+            });
+
+            // Show/hide pages
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.toggle('active', p.id === `page-${page}`);
+            });
+
+            // Load page content
+            loadPageContent(page);
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        function loadPageContent(page) {
+            switch(page) {
+                case 'home':
+                    renderHomePage();
+                    break;
+                case 'trophies':
+                    renderTrophiesPage();
+                    break;
+                case 'stats':
+                    renderStatsPage();
+                    break;
+                case 'calendar':
+                    renderCalendarPage();
+                    break;
+                case 'glagascar':
+                    renderGlagascarPage();
+                    break;
+            }
+        }
+
+        // Handle browser back/forward
+        window.addEventListener('popstate', (e) => {
+            const page = e.state?.page || 'home';
+            navigateTo(page);
+        });
+
+        // Update sidebar user info
+        function updateSidebarUser(session) {
+            const nameEl = document.getElementById('sidebar-user-name');
+            const avatarEl = document.getElementById('sidebar-avatar');
+            if (!nameEl || !avatarEl) return;
+
+            if (session && session.user) {
+                const user = session.user;
+                const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email || 'Jugador';
+                nameEl.textContent = fullName;
+                avatarEl.textContent = fullName.charAt(0).toUpperCase();
+            } else {
+                nameEl.textContent = 'Jugador';
+                avatarEl.textContent = 'M';
+            }
+        }
+
+        // Show app shell (after login)
+        function showAppShell() {
+            const shell = document.getElementById('app-shell');
+            const landing = document.getElementById('landing-page');
+            
+            if (shell) shell.classList.remove('hidden');
+            if (landing) landing.classList.add('hidden');
+            
+            // Check URL for initial page
+            const urlParams = new URLSearchParams(window.location.search);
+            const page = urlParams.get('page') || 'home';
+            navigateTo(page);
+        }
+
+        // Hide app shell (after logout)
+        function hideAppShell() {
+            const shell = document.getElementById('app-shell');
+            const landing = document.getElementById('landing-page');
+            
+            if (shell) shell.classList.add('hidden');
+            if (landing) {
+                landing.classList.remove('hidden');
+                landing.classList.remove('fade-out');
+            }
+        }
+
+        // ==========================================
+        // PAGE RENDERERS (Placeholders - will be implemented)
+        // ==========================================
+        
+        function renderHomePage() {
+            const container = document.getElementById('home-content');
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-calendar"></i> Próximo Partido</div>
+                    </div>
+                    <p style="color: var(--text-muted);">Cargando desde Supabase...</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-bell"></i> Actividad Reciente</div>
+                    </div>
+                    <p style="color: var(--text-muted);">Sin actividad reciente</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-megaphone"></i> Anuncios</div>
+                        <button class="btn-small" onclick="openAnnouncementModal()">+ Nuevo</button>
+                    </div>
+                    <p style="color: var(--text-muted);">No hay anuncios</p>
+                </div>
+            `;
+            loadHomeData();
+        }
+
+        async function loadHomeData() {
+            if (!supabaseClient) return;
+
+            try {
+                // Load all data in parallel for performance
+                const [matchesResult, activityResult, announcementsResult] = await Promise.all([
+                    supabaseClient
+                        .from('matches')
+                        .select('*')
+                        .gte('match_date', new Date().toISOString().split('T')[0])
+                        .order('match_date', { ascending: true })
+                        .limit(3),
+                    supabaseClient
+                        .from('activity_feed')
+                        .select('*')
+                        .order('created_at', { ascending: false })
+                        .limit(10),
+                    supabaseClient
+                        .from('announcements')
+                        .select('*')
+                        .order('is_pinned', { ascending: false })
+                        .order('created_at', { ascending: false })
+                        .limit(5)
+                ]);
+
+                renderNextMatch(matchesResult.data || []);
+                renderActivityFeed(activityResult.data || []);
+                renderAnnouncements(announcementsResult.data || []);
+
+            } catch (err) {
+                console.error('Error loading home data:', err);
+            }
+        }
+
+        function renderNextMatch(matches) {
+            const container = document.querySelector('#home-content .card:first-child');
+            if (!container) return;
+
+            if (!matches || matches.length === 0) {
+                container.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-calendar"></i> Próximo Partido</div>
+                        <button class="btn-small" onclick="openAddMatchModal()">+ Añadir</button>
+                    </div>
+                    <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                        No hay partidos programados.<br>
+                        <small>Añade uno desde Calendario</small>
+                    </p>
+                `;
+                return;
+            }
+
+            const match = matches[0];
+            const matchDate = new Date(match.match_date);
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            const dateStr = matchDate.toLocaleDateString('es-ES', options);
+
+            container.innerHTML = `
+                <div class="card-header">
+                    <div class="card-title"><i class="ph-fill ph-calendar"></i> Próximo Partido</div>
+                </div>
+                <div class="match-card" style="background: linear-gradient(135deg, rgba(142,68,173,0.1), transparent);">
+                    <div class="match-teams">
+                        <div class="match-team">
+                            <img src="escudo.svg" alt="Madagascar" width="32" height="32">
+                            <strong>Madagascar FC</strong>
+                        </div>
+                        <span class="match-vs">vs</span>
+                        <div class="match-team">
+                            <span>${match.opponent || 'Rival'}</span>
+                        </div>
+                    </div>
+                    <div class="match-info">
+                        <div class="match-date">${dateStr}</div>
+                        <div class="match-time">${match.match_time ? match.match_time.slice(0,5) : 'TBD'} ${match.is_home ? '🏠 Casa' : '🚗 Fuera'}</div>
+                        ${match.location ? `<div class="match-time">📍 ${match.location}</div>` : ''}
+                    </div>
+                </div>
+                ${matches.length > 1 ? `<p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 8px;">+${matches.length - 1} partidos más en calendario</p>` : ''}
+            `;
+        }
+
+        function renderActivityFeed(activities) {
+            const cards = document.querySelectorAll('#home-content .card');
+            const container = cards[1];
+            if (!container) return;
+
+            if (!activities || activities.length === 0) {
+                container.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-bell"></i> Actividad Reciente</div>
+                    </div>
+                    <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                        Sin actividad reciente
+                    </p>
+                `;
+                return;
+            }
+
+            const activityIcons = {
+                'trophy_unlock': 'ph-trophy',
+                'match_result': 'ph-soccer-ball',
+                'announcement': 'ph-megaphone',
+                'player_added': 'ph-user-plus',
+                'glagascar_vote': 'ph-star'
+            };
+
+            const activityHtml = activities.map(a => {
+                const icon = activityIcons[a.activity_type] || 'ph-bell';
+                const timeAgo = getTimeAgo(new Date(a.created_at));
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="ph-fill ${icon}"></i></div>
+                        <div class="activity-content">
+                            <p><strong>${a.user_name || 'Usuario'}</strong> ${a.title}</p>
+                            ${a.description ? `<p style="color: var(--text-muted); font-size: 0.85rem;">${a.description}</p>` : ''}
+                            <span class="time">${timeAgo}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="card-header">
+                    <div class="card-title"><i class="ph-fill ph-bell"></i> Actividad Reciente</div>
+                </div>
+                ${activityHtml}
+            `;
+        }
+
+        function renderAnnouncements(announcements) {
+            const cards = document.querySelectorAll('#home-content .card');
+            const container = cards[2];
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="card-header">
+                    <div class="card-title"><i class="ph-fill ph-megaphone"></i> Anuncios</div>
+                    <button class="btn-small" onclick="openAnnouncementModal()">+ Nuevo</button>
+                </div>
+                ${!announcements || announcements.length === 0 ? `
+                    <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                        No hay anuncios
+                    </p>
+                ` : announcements.map(a => `
+                    <div class="activity-item">
+                        <div class="activity-icon" style="${a.is_pinned ? 'background: rgba(255,215,0,0.2);' : ''}">
+                            <i class="ph-fill ${a.is_pinned ? 'ph-push-pin' : 'ph-megaphone'}" style="${a.is_pinned ? 'color: #ffd700;' : ''}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <p><strong>${a.title}</strong></p>
+                            ${a.content ? `<p style="color: var(--text-muted); font-size: 0.85rem;">${a.content}</p>` : ''}
+                            <span class="time">por ${a.author_name || 'Anónimo'} · ${getTimeAgo(new Date(a.created_at))}</span>
+                        </div>
+                        <button onclick="deleteAnnouncement('${a.id}')" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 8px;">
+                            <i class="ph ph-trash"></i>
+                        </button>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // Utility: Human-readable time ago
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            const intervals = [
+                { label: 'año', seconds: 31536000 },
+                { label: 'mes', seconds: 2592000 },
+                { label: 'semana', seconds: 604800 },
+                { label: 'día', seconds: 86400 },
+                { label: 'hora', seconds: 3600 },
+                { label: 'minuto', seconds: 60 }
+            ];
+
+            for (const interval of intervals) {
+                const count = Math.floor(seconds / interval.seconds);
+                if (count >= 1) {
+                    const plural = count > 1 ? (interval.label === 'mes' ? 'es' : 's') : '';
+                    return `hace ${count} ${interval.label}${plural}`;
+                }
+            }
+            return 'ahora mismo';
+        }
+
+        // ==========================================
+        // ANNOUNCEMENT CRUD
+        // ==========================================
+        let announcementModalOpen = false;
+
+        function openAnnouncementModal() {
+            const modal = document.getElementById('announcementModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                announcementModalOpen = true;
+            }
+        }
+
+        function closeAnnouncementModal() {
+            const modal = document.getElementById('announcementModal');
+            if (modal) {
+                modal.style.display = 'none';
+                announcementModalOpen = false;
+                document.getElementById('announcement-title').value = '';
+                document.getElementById('announcement-content').value = '';
+                document.getElementById('announcement-pinned').checked = false;
+            }
+        }
+
+        async function submitAnnouncement() {
+            const title = document.getElementById('announcement-title').value.trim();
+            const content = document.getElementById('announcement-content').value.trim();
+            const isPinned = document.getElementById('announcement-pinned').checked;
+
+            if (!title) {
+                alert('El título es obligatorio');
+                return;
+            }
+
+            if (!supabaseClient || !currentUserId) {
+                alert('Debes estar logueado');
+                return;
+            }
+
+            try {
+                // Get current user name
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                const authorName = session?.user?.user_metadata?.full_name || 
+                                   session?.user?.user_metadata?.name || 
+                                   session?.user?.email || 'Usuario';
+
+                const { error } = await supabaseClient
+                    .from('announcements')
+                    .insert({
+                        title,
+                        content,
+                        is_pinned: isPinned,
+                        created_by: currentUserId,
+                        author_name: authorName
+                    });
+
+                if (error) throw error;
+
+                // Also add to activity feed
+                await supabaseClient
+                    .from('activity_feed')
+                    .insert({
+                        activity_type: 'announcement',
+                        title: `publicó: "${title}"`,
+                        user_id: currentUserId,
+                        user_name: authorName
+                    });
+
+                closeAnnouncementModal();
+                loadHomeData(); // Refresh
+                showToast('Anuncio publicado', 'bronze');
+
+            } catch (err) {
+                console.error('Error creating announcement:', err);
+                alert('Error al crear anuncio: ' + err.message);
+            }
+        }
+
+        async function deleteAnnouncement(id) {
+            if (!confirm('¿Eliminar este anuncio?')) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('announcements')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                loadHomeData(); // Refresh
+                showToast('Anuncio eliminado', 'bronze');
+
+            } catch (err) {
+                console.error('Error deleting announcement:', err);
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function renderTrophiesPage() {
+            renderDashboard(); // Reuse existing trophy logic
+        }
+
+        function renderStatsPage() {
+            const container = document.getElementById('stats-content');
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-ranking"></i> Tabla de Goleadores</div>
+                        <button class="btn-small" onclick="openAddPlayerModal()">+ Jugador</button>
+                    </div>
+                    <div id="scorers-table">
+                        <p style="color: var(--text-muted);">Cargando estadísticas...</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-hand-fist"></i> Tabla de Asistencias</div>
+                    </div>
+                    <div id="assists-table">
+                        <p style="color: var(--text-muted);">Cargando...</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-users"></i> Plantilla Completa</div>
+                    </div>
+                    <div id="squad-table">
+                        <p style="color: var(--text-muted);">Cargando plantilla...</p>
+                    </div>
+                </div>
+            `;
+            loadStatsData();
+        }
+
+        async function loadStatsData() {
+            if (!supabaseClient) return;
+
+            try {
+                // Get players with their aggregated stats
+                const { data: players, error } = await supabaseClient
+                    .from('players')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('jersey_number', { ascending: true });
+
+                if (error) throw error;
+
+                // Get aggregated stats per player
+                const { data: stats } = await supabaseClient
+                    .from('player_stats')
+                    .select('player_id, goals, assists, yellow_cards, red_cards, minutes_played');
+
+                // Aggregate stats by player
+                const statsMap = {};
+                (stats || []).forEach(s => {
+                    if (!statsMap[s.player_id]) {
+                        statsMap[s.player_id] = { goals: 0, assists: 0, yellows: 0, reds: 0, minutes: 0, matches: 0 };
+                    }
+                    statsMap[s.player_id].goals += s.goals || 0;
+                    statsMap[s.player_id].assists += s.assists || 0;
+                    statsMap[s.player_id].yellows += s.yellow_cards || 0;
+                    statsMap[s.player_id].reds += s.red_cards || 0;
+                    statsMap[s.player_id].minutes += s.minutes_played || 0;
+                    statsMap[s.player_id].matches++;
+                });
+
+                // Enrich players with stats
+                const enrichedPlayers = (players || []).map(p => ({
+                    ...p,
+                    stats: statsMap[p.id] || { goals: 0, assists: 0, yellows: 0, reds: 0, minutes: 0, matches: 0 }
+                }));
+
+                renderScorersTable(enrichedPlayers);
+                renderAssistsTable(enrichedPlayers);
+                renderSquadTable(enrichedPlayers);
+
+            } catch (err) {
+                console.error('Error loading stats:', err);
+                document.getElementById('scorers-table').innerHTML = `<p style="color: #ff6b6b;">Error: ${err.message}</p>`;
+            }
+        }
+
+        function renderScorersTable(players) {
+            const container = document.getElementById('scorers-table');
+            const scorers = [...players].sort((a, b) => (b.stats.goals - a.stats.goals)).slice(0, 10);
+
+            if (scorers.length === 0 || scorers.every(p => p.stats.goals === 0)) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                    Aún no hay goles registrados.<br><small>Añade jugadores y registra estadísticas de partido</small>
+                </p>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Jugador</th>
+                            <th style="text-align: center;">⚽</th>
+                            <th style="text-align: center;">PJ</th>
+                            <th style="text-align: center;">Ratio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${scorers.filter(p => p.stats.goals > 0).map((p, i) => `
+                            <tr>
+                                <td style="color: ${i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : 'inherit'}; font-weight: ${i < 3 ? '600' : '400'};">${i + 1}</td>
+                                <td>
+                                    <strong>${p.jersey_number ? `#${p.jersey_number} ` : ''}${p.name}</strong>
+                                    <br><small style="color: var(--text-muted);">${p.position || ''}</small>
+                                </td>
+                                <td style="text-align: center; font-weight: 600; color: var(--accent-glow);">${p.stats.goals}</td>
+                                <td style="text-align: center; color: var(--text-muted);">${p.stats.matches}</td>
+                                <td style="text-align: center; color: var(--text-muted);">${p.stats.matches ? (p.stats.goals / p.stats.matches).toFixed(2) : '0.00'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderAssistsTable(players) {
+            const container = document.getElementById('assists-table');
+            const assisters = [...players].sort((a, b) => (b.stats.assists - a.stats.assists)).slice(0, 10);
+
+            if (assisters.length === 0 || assisters.every(p => p.stats.assists === 0)) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px;">Sin asistencias registradas</p>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Jugador</th>
+                            <th style="text-align: center;">🅰️</th>
+                            <th style="text-align: center;">PJ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${assisters.filter(p => p.stats.assists > 0).map((p, i) => `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td><strong>${p.jersey_number ? `#${p.jersey_number} ` : ''}${p.name}</strong></td>
+                                <td style="text-align: center; font-weight: 600; color: #3498db;">${p.stats.assists}</td>
+                                <td style="text-align: center; color: var(--text-muted);">${p.stats.matches}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderSquadTable(players) {
+            const container = document.getElementById('squad-table');
+
+            if (players.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                    No hay jugadores registrados.<br>
+                    <button class="btn-small" style="margin-top: 10px;" onclick="openAddPlayerModal()">+ Añadir primer jugador</button>
+                </p>`;
+                return;
+            }
+
+            const positionOrder = { 'Portero': 1, 'Defensa': 2, 'Centrocampista': 3, 'Delantero': 4 };
+            const sortedPlayers = [...players].sort((a, b) => 
+                (positionOrder[a.position] || 99) - (positionOrder[b.position] || 99)
+            );
+
+            container.innerHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Dorsal</th>
+                            <th>Nombre</th>
+                            <th>Posición</th>
+                            <th style="text-align: center;">⚽</th>
+                            <th style="text-align: center;">🅰️</th>
+                            <th style="text-align: center;">🟨</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedPlayers.map(p => `
+                            <tr>
+                                <td style="font-weight: 600;">${p.jersey_number || '-'}</td>
+                                <td><strong>${p.name}</strong>${p.nickname ? `<br><small style="color: var(--text-muted);">"${p.nickname}"</small>` : ''}</td>
+                                <td>${p.position || '-'}</td>
+                                <td style="text-align: center;">${p.stats.goals}</td>
+                                <td style="text-align: center;">${p.stats.assists}</td>
+                                <td style="text-align: center;">${p.stats.yellows}${p.stats.reds ? `/<span style="color: #e74c3c;">${p.stats.reds}</span>` : ''}</td>
+                                <td>
+                                    <button onclick="deletePlayer('${p.id}')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                                        <i class="ph ph-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // ==========================================
+        // PLAYER CRUD
+        // ==========================================
+        function openAddPlayerModal() {
+            const modal = document.getElementById('playerModal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closePlayerModal() {
+            const modal = document.getElementById('playerModal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.getElementById('player-name').value = '';
+                document.getElementById('player-nickname').value = '';
+                document.getElementById('player-number').value = '';
+                document.getElementById('player-position').value = '';
+            }
+        }
+
+        async function submitPlayer() {
+            const name = document.getElementById('player-name').value.trim();
+            const nickname = document.getElementById('player-nickname').value.trim();
+            const number = parseInt(document.getElementById('player-number').value) || null;
+            const position = document.getElementById('player-position').value;
+
+            if (!name) {
+                alert('El nombre es obligatorio');
+                return;
+            }
+
+            if (!supabaseClient) {
+                alert('Error de conexión');
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('players')
+                    .insert({
+                        name,
+                        nickname: nickname || null,
+                        jersey_number: number,
+                        position: position || null,
+                        is_active: true
+                    });
+
+                if (error) throw error;
+
+                closePlayerModal();
+                loadStatsData();
+                showToast(`${name} añadido al equipo`, 'bronze');
+
+            } catch (err) {
+                console.error('Error adding player:', err);
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function deletePlayer(id) {
+            if (!confirm('¿Eliminar este jugador? Sus estadísticas también se borrarán.')) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('players')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                loadStatsData();
+                showToast('Jugador eliminado', 'bronze');
+
+            } catch (err) {
+                console.error('Error deleting player:', err);
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function renderCalendarPage() {
+            const container = document.getElementById('calendar-content');
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-soccer-ball"></i> Partidos</div>
+                        <button class="btn-small" onclick="openAddMatchModal()">+ Partido</button>
+                    </div>
+                    <div id="matches-list">
+                        <p style="color: var(--text-muted);">Cargando calendario...</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-list-numbers"></i> Clasificación Liga</div>
+                        <button class="btn-small" onclick="openEditStandingsModal()">Editar</button>
+                    </div>
+                    <div id="standings-table">
+                        <p style="color: var(--text-muted);">Cargando clasificación...</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-clock-counter-clockwise"></i> Resultados Anteriores</div>
+                    </div>
+                    <div id="past-matches">
+                        <p style="color: var(--text-muted);">Cargando...</p>
+                    </div>
+                </div>
+            `;
+            loadCalendarData();
+        }
+
+        async function loadCalendarData() {
+            if (!supabaseClient) return;
+
+            try {
+                const today = new Date().toISOString().split('T')[0];
+
+                // Load matches and standings in parallel
+                const [matchesResult, standingsResult] = await Promise.all([
+                    supabaseClient
+                        .from('matches')
+                        .select('*')
+                        .order('match_date', { ascending: true }),
+                    supabaseClient
+                        .from('standings')
+                        .select('*')
+                        .order('position', { ascending: true })
+                ]);
+
+                const matches = matchesResult.data || [];
+                const upcoming = matches.filter(m => m.match_date >= today);
+                const past = matches.filter(m => m.match_date < today).reverse();
+
+                renderMatchesList(upcoming);
+                renderPastMatches(past);
+                renderStandingsTable(standingsResult.data || []);
+
+            } catch (err) {
+                console.error('Error loading calendar:', err);
+                document.getElementById('matches-list').innerHTML = `<p style="color: #ff6b6b;">Error: ${err.message}</p>`;
+            }
+        }
+
+        function renderMatchesList(matches) {
+            const container = document.getElementById('matches-list');
+
+            if (!matches || matches.length === 0) {
+                container.innerHTML = `
+                    <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                        No hay partidos programados.<br>
+                        <button class="btn-small" style="margin-top: 10px;" onclick="openAddMatchModal()">+ Añadir partido</button>
+                    </p>
+                `;
+                return;
+            }
+
+            container.innerHTML = matches.map(m => {
+                const date = new Date(m.match_date);
+                const dateStr = date.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+                
+                return `
+                    <div class="match-card" style="margin-bottom: 12px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${m.is_home ? 'Madagascar FC' : m.opponent}</strong>
+                                <span style="color: var(--text-muted); margin: 0 8px;">vs</span>
+                                <strong>${m.is_home ? m.opponent : 'Madagascar FC'}</strong>
+                            </div>
+                            <button onclick="deleteMatch('${m.id}')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
+                                <i class="ph ph-trash"></i>
+                            </button>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;">
+                            📅 ${dateStr} ${m.match_time ? `· ${m.match_time.slice(0,5)}` : ''}
+                            ${m.is_home ? ' · 🏠 Casa' : ' · 🚗 Fuera'}
+                            ${m.location ? ` · 📍 ${m.location}` : ''}
+                            ${m.competition ? ` · 🏆 ${m.competition}` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPastMatches(matches) {
+            const container = document.getElementById('past-matches');
+
+            if (!matches || matches.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px;">Sin partidos anteriores</p>`;
+                return;
+            }
+
+            container.innerHTML = matches.slice(0, 10).map(m => {
+                const date = new Date(m.match_date);
+                const dateStr = date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+                const hasScore = m.goals_for !== null && m.goals_against !== null;
+                const isWin = hasScore && m.goals_for > m.goals_against;
+                const isDraw = hasScore && m.goals_for === m.goals_against;
+                const resultColor = isWin ? '#2ecc71' : isDraw ? '#f39c12' : '#e74c3c';
+
+                return `
+                    <div class="match-card" style="margin-bottom: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="color: var(--text-muted); font-size: 0.8rem;">${dateStr}</span>
+                            <span style="margin-left: 8px;">${m.is_home ? 'vs' : '@'} ${m.opponent}</span>
+                        </div>
+                        ${hasScore ? `
+                            <div style="font-weight: 600; color: ${resultColor};">
+                                ${m.goals_for} - ${m.goals_against}
+                            </div>
+                        ` : `
+                            <button onclick="openAddResultModal('${m.id}', '${m.opponent}')" class="btn-small">Añadir resultado</button>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStandingsTable(standings) {
+            const container = document.getElementById('standings-table');
+
+            if (!standings || standings.length === 0) {
+                container.innerHTML = `
+                    <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                        No hay clasificación configurada.<br>
+                        <button class="btn-small" style="margin-top: 10px;" onclick="openEditStandingsModal()">+ Configurar liga</button>
+                    </p>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th>Equipo</th>
+                            <th style="text-align: center;">PJ</th>
+                            <th style="text-align: center;">Pts</th>
+                            <th style="text-align: center;">DG</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${standings.map(s => {
+                            const isMadagascar = s.team_name.toLowerCase().includes('madagascar');
+                            return `
+                                <tr style="${isMadagascar ? 'background: rgba(142,68,173,0.15); font-weight: 600;' : ''}">
+                                    <td style="${s.position <= 2 ? 'color: #2ecc71;' : s.position >= standings.length - 1 ? 'color: #e74c3c;' : ''}">${s.position}</td>
+                                    <td>${isMadagascar ? '🦁 ' : ''}${s.team_name}</td>
+                                    <td style="text-align: center;">${s.matches_played}</td>
+                                    <td style="text-align: center; font-weight: 600;">${s.points}</td>
+                                    <td style="text-align: center; color: ${s.goal_difference > 0 ? '#2ecc71' : s.goal_difference < 0 ? '#e74c3c' : 'inherit'};">
+                                        ${s.goal_difference > 0 ? '+' : ''}${s.goal_difference}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // ==========================================
+        // MATCH CRUD
+        // ==========================================
+        function openAddMatchModal() {
+            const modal = document.getElementById('matchModal');
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeMatchModal() {
+            const modal = document.getElementById('matchModal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.getElementById('match-opponent').value = '';
+                document.getElementById('match-date').value = '';
+                document.getElementById('match-time').value = '';
+                document.getElementById('match-location').value = '';
+                document.getElementById('match-competition').value = '';
+                document.getElementById('match-is-home').checked = true;
+            }
+        }
+
+        async function submitMatch() {
+            const opponent = document.getElementById('match-opponent').value.trim();
+            const matchDate = document.getElementById('match-date').value;
+            const matchTime = document.getElementById('match-time').value;
+            const location = document.getElementById('match-location').value.trim();
+            const competition = document.getElementById('match-competition').value.trim();
+            const isHome = document.getElementById('match-is-home').checked;
+
+            if (!opponent || !matchDate) {
+                alert('El rival y la fecha son obligatorios');
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient
+                    .from('matches')
+                    .insert({
+                        opponent,
+                        match_date: matchDate,
+                        match_time: matchTime || null,
+                        location: location || null,
+                        competition: competition || null,
+                        is_home: isHome
+                    });
+
+                if (error) throw error;
+
+                closeMatchModal();
+                loadCalendarData();
+                loadHomeData(); // Refresh home too
+                showToast('Partido añadido', 'bronze');
+
+            } catch (err) {
+                console.error('Error adding match:', err);
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function deleteMatch(id) {
+            if (!confirm('¿Eliminar este partido?')) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('matches')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                loadCalendarData();
+                loadHomeData();
+                showToast('Partido eliminado', 'bronze');
+
+            } catch (err) {
+                console.error('Error deleting match:', err);
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function openAddResultModal(matchId, opponent) {
+            const goalsFor = prompt(`Goles de Madagascar vs ${opponent}:`, '0');
+            if (goalsFor === null) return;
+            const goalsAgainst = prompt(`Goles de ${opponent}:`, '0');
+            if (goalsAgainst === null) return;
+
+            updateMatchResult(matchId, parseInt(goalsFor) || 0, parseInt(goalsAgainst) || 0);
+        }
+
+        async function updateMatchResult(matchId, goalsFor, goalsAgainst) {
+            try {
+                const { error } = await supabaseClient
+                    .from('matches')
+                    .update({ goals_for: goalsFor, goals_against: goalsAgainst })
+                    .eq('id', matchId);
+
+                if (error) throw error;
+
+                loadCalendarData();
+                showToast('Resultado guardado', 'bronze');
+
+            } catch (err) {
+                console.error('Error updating result:', err);
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function openEditStandingsModal() {
+            alert('Para editar la clasificación, usa el panel de Supabase directamente en la tabla "standings". Próximamente se añadirá un formulario aquí.');
+        }
+
+        function renderGlagascarPage() {
+            const container = document.getElementById('glagascar-content');
+            container.innerHTML = `
+                <div class="card" style="text-align: center; padding: 40px; background: linear-gradient(135deg, rgba(142,68,173,0.2), rgba(155,89,182,0.05));">
+                    <i class="ph-fill ph-mask-happy" style="font-size: 4rem; color: var(--accent-glow);"></i>
+                    <h3 style="margin: 16px 0 8px;">Road to Glagascar 2026</h3>
+                    <p style="color: var(--text-muted);">La gala anual de premios del Madagascar FC</p>
+                    <div id="glagascar-countdown" style="margin-top: 16px; font-size: 0.9rem; color: var(--text-muted);"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-trophy"></i> Categorías de Premios</div>
+                        <button class="btn-small" onclick="openAddCategoryModal()">+ Categoría</button>
+                    </div>
+                    <div id="glagascar-categories">
+                        <p style="color: var(--text-muted);">Cargando categorías...</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="ph-fill ph-chart-bar"></i> Ranking de Nominaciones</div>
+                    </div>
+                    <div id="glagascar-ranking">
+                        <p style="color: var(--text-muted);">Cargando ranking...</p>
+                    </div>
+                </div>
+            `;
+            loadGlagascarData();
+        }
+
+        async function loadGlagascarData() {
+            if (!supabaseClient) return;
+
+            try {
+                // Load settings, categories, nominations, and votes in parallel
+                const [settingsResult, categoriesResult, nominationsResult] = await Promise.all([
+                    supabaseClient.from('glagascar_settings').select('*').single(),
+                    supabaseClient.from('glagascar_categories').select('*').order('display_order', { ascending: true }),
+                    supabaseClient.from('glagascar_nominations').select('*, glagascar_votes(count)')
+                ]);
+
+                const settings = settingsResult.data;
+                const categories = categoriesResult.data || [];
+                const nominations = nominationsResult.data || [];
+
+                // Update countdown
+                updateGlagascarCountdown(settings);
+
+                // Render categories with nominations
+                renderGlagascarCategories(categories, nominations, settings);
+
+                // Render overall ranking
+                renderGlagascarRanking(nominations);
+
+            } catch (err) {
+                console.error('Error loading Glagascar data:', err);
+                document.getElementById('glagascar-categories').innerHTML = `
+                    <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                        Para usar Glagascar, primero ejecuta el esquema SQL en Supabase.<br>
+                        <small>Consulta las instrucciones en el código.</small>
+                    </p>
+                `;
+            }
+        }
+
+        function updateGlagascarCountdown(settings) {
+            const container = document.getElementById('glagascar-countdown');
+            if (!container) return;
+
+            if (!settings || !settings.ceremony_date) {
+                container.innerHTML = '<span>Fecha de la gala por confirmar</span>';
+                return;
+            }
+
+            const ceremonyDate = new Date(settings.ceremony_date);
+            const now = new Date();
+            const diff = ceremonyDate - now;
+
+            if (diff <= 0) {
+                container.innerHTML = `<span style="color: var(--accent-glow);">🎉 ¡Glagascar ${settings.edition_year || new Date().getFullYear()} ya pasó!</span>`;
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            container.innerHTML = `
+                <span>⏳ Faltan <strong style="color: var(--accent-glow);">${days} días</strong> para la gala</span>
+                ${settings.voting_open ? '<br><span style="color: #2ecc71;">✅ Votaciones abiertas</span>' : '<br><span style="color: #e74c3c;">🔒 Votaciones cerradas</span>'}
+            `;
+        }
+
+        function renderGlagascarCategories(categories, nominations, settings) {
+            const container = document.getElementById('glagascar-categories');
+
+            if (!categories || categories.length === 0) {
+                container.innerHTML = `
+                    <p style="color: var(--text-muted); text-align: center; padding: 20px;">
+                        No hay categorías creadas aún.<br>
+                        <button class="btn-small" style="margin-top: 10px;" onclick="openAddCategoryModal()">+ Crear primera categoría</button>
+                    </p>
+                `;
+                return;
+            }
+
+            container.innerHTML = categories.map(cat => {
+                const catNominations = nominations.filter(n => n.category_id === cat.id);
+                const maxVotes = Math.max(...catNominations.map(n => n.glagascar_votes?.[0]?.count || 0), 1);
+
+                return `
+                    <div class="activity-item" style="flex-direction: column; align-items: stretch;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <strong>${cat.icon || '🏆'} ${cat.name}</strong>
+                                ${cat.description ? `<br><small style="color: var(--text-muted);">${cat.description}</small>` : ''}
+                            </div>
+                            <button onclick="openNominateModal('${cat.id}', '${cat.name}')" class="btn-small" ${settings?.voting_open ? '' : 'disabled style="opacity: 0.5;"'}>
+                                ${settings?.voting_open ? '+ Nominar' : 'Cerrado'}
+                            </button>
+                        </div>
+                        ${catNominations.length > 0 ? `
+                            <div style="margin-top: 12px; width: 100%;">
+                                ${catNominations.sort((a, b) => (b.glagascar_votes?.[0]?.count || 0) - (a.glagascar_votes?.[0]?.count || 0)).map(nom => {
+                                    const votes = nom.glagascar_votes?.[0]?.count || 0;
+                                    const percentage = (votes / maxVotes) * 100;
+                                    return `
+                                        <div style="margin-bottom: 8px;">
+                                            <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                                                <span>${nom.nominee_name}</span>
+                                                <span style="color: var(--text-muted);">${votes} votos</span>
+                                            </div>
+                                            <div style="background: rgba(255,255,255,0.1); border-radius: 4px; height: 6px; margin-top: 4px; overflow: hidden;">
+                                                <div style="background: var(--accent-glow); height: 100%; width: ${percentage}%; transition: width 0.3s;"></div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : '<p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 10px;">Sin nominados aún</p>'}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderGlagascarRanking(nominations) {
+            const container = document.getElementById('glagascar-ranking');
+
+            // Aggregate votes per nominee across all categories
+            const votesByNominee = {};
+            nominations.forEach(n => {
+                const name = n.nominee_name;
+                const votes = n.glagascar_votes?.[0]?.count || 0;
+                if (!votesByNominee[name]) {
+                    votesByNominee[name] = { name, totalVotes: 0, nominations: 0 };
+                }
+                votesByNominee[name].totalVotes += votes;
+                votesByNominee[name].nominations++;
+            });
+
+            const ranking = Object.values(votesByNominee)
+                .sort((a, b) => b.totalVotes - a.totalVotes)
+                .slice(0, 10);
+
+            if (ranking.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-muted); text-align: center; padding: 20px;">Sin nominaciones aún</p>`;
+                return;
+            }
+
+            container.innerHTML = ranking.map((r, i) => {
+                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                return `
+                    <div class="activity-item">
+                        <div style="font-size: 1.2rem; width: 32px; text-align: center;">${medal}</div>
+                        <div class="activity-content">
+                            <p><strong>${r.name}</strong></p>
+                            <span class="time">${r.totalVotes} votos totales · ${r.nominations} nominaciones</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // GLAGASCAR CRUD
+        // ==========================================
+        function openAddCategoryModal() {
+            const name = prompt('Nombre de la categoría (ej: "Mejor Jugador"):');
+            if (!name) return;
+
+            const icon = prompt('Emoji para la categoría:', '🏆');
+            const description = prompt('Descripción (opcional):');
+
+            createCategory(name, icon || '🏆', description || '');
+        }
+
+        async function createCategory(name, icon, description) {
+            if (!supabaseClient) return;
+
+            try {
+                // Get current max order
+                const { data: existing } = await supabaseClient
+                    .from('glagascar_categories')
+                    .select('display_order')
+                    .order('display_order', { ascending: false })
+                    .limit(1);
+
+                const nextOrder = (existing?.[0]?.display_order || 0) + 1;
+
+                const { error } = await supabaseClient
+                    .from('glagascar_categories')
+                    .insert({
+                        name,
+                        icon,
+                        description,
+                        display_order: nextOrder
+                    });
+
+                if (error) throw error;
+
+                loadGlagascarData();
+                showToast('Categoría creada', 'bronze');
+
+            } catch (err) {
+                console.error('Error creating category:', err);
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function openNominateModal(categoryId, categoryName) {
+            const nomineeName = prompt(`Nominar para "${categoryName}":\n\nNombre del nominado:`);
+            if (!nomineeName?.trim()) return;
+
+            const reason = prompt('Razón de la nominación (opcional):');
+
+            createNomination(categoryId, nomineeName.trim(), reason || '');
+        }
+
+        async function createNomination(categoryId, nomineeName, reason) {
+            if (!supabaseClient || !currentUserId) {
+                alert('Debes estar logueado para nominar');
+                return;
+            }
+
+            try {
+                // Check if already nominated
+                const { data: existing } = await supabaseClient
+                    .from('glagascar_nominations')
+                    .select('id')
+                    .eq('category_id', categoryId)
+                    .ilike('nominee_name', nomineeName);
+
+                if (existing && existing.length > 0) {
+                    // Already nominated, add a vote instead
+                    await voteForNomination(existing[0].id);
+                    return;
+                }
+
+                // Create new nomination
+                const { data: nomination, error } = await supabaseClient
+                    .from('glagascar_nominations')
+                    .insert({
+                        category_id: categoryId,
+                        nominee_name: nomineeName,
+                        reason,
+                        nominated_by: currentUserId
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Auto-vote for your own nomination
+                await supabaseClient
+                    .from('glagascar_votes')
+                    .insert({
+                        nomination_id: nomination.id,
+                        user_id: currentUserId
+                    });
+
+                loadGlagascarData();
+                showToast(`${nomineeName} nominado`, 'bronze');
+
+            } catch (err) {
+                console.error('Error creating nomination:', err);
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function voteForNomination(nominationId) {
+            if (!supabaseClient || !currentUserId) {
+                alert('Debes estar logueado para votar');
+                return;
+            }
+
+            try {
+                // Check if already voted
+                const { data: existing } = await supabaseClient
+                    .from('glagascar_votes')
+                    .select('id')
+                    .eq('nomination_id', nominationId)
+                    .eq('user_id', currentUserId);
+
+                if (existing && existing.length > 0) {
+                    alert('Ya has votado por este nominado');
+                    return;
+                }
+
+                const { error } = await supabaseClient
+                    .from('glagascar_votes')
+                    .insert({
+                        nomination_id: nominationId,
+                        user_id: currentUserId
+                    });
+
+                if (error) throw error;
+
+                loadGlagascarData();
+                showToast('Voto registrado', 'bronze');
+
+            } catch (err) {
+                console.error('Error voting:', err);
+                alert('Error: ' + err.message);
+            }
         }
 
         // ==========================================
@@ -2022,6 +3999,7 @@
             if (!session || !session.user) return;
             currentUserId = session.user.id;
             updateUserBadge(session);
+            updateSidebarUser(session); // Update sidebar with user info
 
             // User request: Prioritize cloud.
             // 1. Try to load from cloud.
@@ -2042,51 +4020,26 @@
 
         function showDashboardInstant() {
             const landing = document.getElementById('landing-page');
-            const dash = document.getElementById('dashboard-page');
-            if (!landing || !dash) return;
-
+            
             try {
                 sessionStorage.setItem('madagascar_view_v1', 'dashboard');
             } catch (_) { }
-            document.documentElement.classList.add('start-dashboard');
 
             preloadSounds();
 
-            // Reset possible inline styles from logout animation
-            dash.style.opacity = '';
-            dash.style.transform = '';
-            dash.style.transition = '';
-
-            landing.classList.add('hidden');
-            landing.classList.remove('fade-out');
-
-            dash.classList.remove('hidden');
-            dash.classList.add('fade-in');
-
-            renderDashboard();
+            // Use new app shell
+            showAppShell();
             window.scrollTo(0, 0);
         }
 
         function showLandingInstant() {
-            const landing = document.getElementById('landing-page');
-            const dash = document.getElementById('dashboard-page');
-            if (!landing || !dash) return;
-
             try {
                 sessionStorage.setItem('madagascar_view_v1', 'landing');
             } catch (_) { }
             document.documentElement.classList.remove('start-dashboard');
 
-            dash.style.opacity = '';
-            dash.style.transform = '';
-            dash.style.transition = '';
-
-            dash.classList.remove('fade-in');
-            dash.classList.add('hidden');
-
-            landing.classList.remove('hidden');
-            landing.classList.remove('fade-out');
-
+            // Use new app shell
+            hideAppShell();
             window.scrollTo(0, 0);
         }
 
@@ -2442,15 +4395,26 @@
         function renderDashboard() {
             checkPlatinum(true);
 
-            const wrapper = document.getElementById('trophies-wrapper');
+            // Use new trophies-content container, fallback to old trophies-wrapper
+            const wrapper = document.getElementById('trophies-content') || document.getElementById('trophies-wrapper');
+            if (!wrapper) return;
             wrapper.innerHTML = '';
 
             const trophiesNoPlat = trophyData.filter(t => t.tier !== 'platinum');
             const unlockedCount = trophiesNoPlat.filter(t => userProgress[t.id]).length;
             const percent = Math.floor((unlockedCount / trophiesNoPlat.length) * 100);
 
-            document.getElementById('progress-text').innerText = `${percent}% Completado`;
-            document.getElementById('progress-fill').style.width = `${percent}%`;
+            // Update progress in new location
+            const progressText = document.getElementById('trophies-progress');
+            if (progressText) {
+                progressText.textContent = `${percent}% Completado (${unlockedCount}/${trophiesNoPlat.length} trofeos)`;
+            }
+
+            // Old progress bar (keep for compatibility)
+            const oldProgressText = document.getElementById('progress-text');
+            const oldProgressFill = document.getElementById('progress-fill');
+            if (oldProgressText) oldProgressText.innerText = `${percent}% Completado`;
+            if (oldProgressFill) oldProgressFill.style.width = `${percent}%`;
 
             const categories = [...new Set(trophyData.map(t => t.category))];
 
@@ -2580,6 +4544,17 @@
             setTimeout(() => {
                 toast.classList.remove('show');
             }, duration);
+        }
+
+        // ==========================================
+        // SERVICE WORKER REGISTRATION
+        // ==========================================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[App] SW registered:', reg.scope))
+                    .catch(err => console.warn('[App] SW registration failed:', err));
+            });
         }
     </script>
 </body>

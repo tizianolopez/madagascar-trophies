@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Iconos PWA - MadagascarFC</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #1a1a2e;
+            color: white;
+            padding: 40px;
+            min-height: 100vh;
+        }
+        h1 {
+            color: #8e44ad;
+            margin-bottom: 20px;
+        }
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        .instructions ol {
+            margin-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        .icons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .icon-box {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .icon-box canvas {
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .icon-box p {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .icon-box a {
+            display: inline-block;
+            background: #8e44ad;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .icon-box a:hover {
+            background: #9b59b6;
+        }
+        #status {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        #status.success {
+            display: block;
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+        }
+        #status.error {
+            display: block;
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <h1>🛡️ Generador de Iconos PWA</h1>
+    
+    <div class="instructions">
+        <h3>Instrucciones:</h3>
+        <ol>
+            <li>Espera a que se cargue el escudo SVG (verás los iconos aparecer abajo)</li>
+            <li>Haz clic en "Descargar" debajo de cada icono</li>
+            <li>Guarda cada archivo en la carpeta <code>madagascar/icons/</code> con el nombre indicado</li>
+            <li>Los iconos necesarios son: icon-72.png, icon-96.png, icon-128.png, icon-144.png, icon-152.png, icon-192.png, icon-384.png, icon-512.png</li>
+        </ol>
+    </div>
+
+    <div id="status"></div>
+
+    <div class="icons-grid" id="icons-container">
+        <!-- Icons will be generated here -->
+    </div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const container = document.getElementById('icons-container');
+        const statusEl = document.getElementById('status');
+
+        // Load the SVG
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = function() {
+            statusEl.className = 'success';
+            statusEl.textContent = '✅ SVG cargado correctamente. Iconos generados:';
+            
+            sizes.forEach(size => {
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                
+                // Fill with dark background for PWA icons
+                ctx.fillStyle = '#050507';
+                ctx.fillRect(0, 0, size, size);
+                
+                // Calculate centered position with padding
+                const padding = size * 0.15;
+                const drawSize = size - (padding * 2);
+                
+                // Draw the SVG centered
+                ctx.drawImage(img, padding, padding, drawSize, drawSize);
+                
+                // Create download link
+                const dataUrl = canvas.toDataURL('image/png');
+                
+                const box = document.createElement('div');
+                box.className = 'icon-box';
+                box.innerHTML = `
+                    <canvas width="${Math.min(size, 150)}" height="${Math.min(size, 150)}" style="width: ${Math.min(size, 150)}px; height: ${Math.min(size, 150)}px;"></canvas>
+                    <p>icon-${size}.png<br>(${size}x${size}px)</p>
+                    <a href="${dataUrl}" download="icon-${size}.png">⬇️ Descargar</a>
+                `;
+                
+                // Draw preview on the display canvas
+                const displayCanvas = box.querySelector('canvas');
+                const displayCtx = displayCanvas.getContext('2d');
+                displayCtx.fillStyle = '#050507';
+                displayCtx.fillRect(0, 0, displayCanvas.width, displayCanvas.height);
+                const displayPadding = displayCanvas.width * 0.15;
+                const displaySize = displayCanvas.width - (displayPadding * 2);
+                displayCtx.drawImage(img, displayPadding, displayPadding, displaySize, displaySize);
+                
+                container.appendChild(box);
+            });
+        };
+        
+        img.onerror = function() {
+            statusEl.className = 'error';
+            statusEl.textContent = '❌ Error al cargar el SVG. Asegúrate de que escudo.svg existe en la misma carpeta.';
+        };
+        
+        // Try to load the SVG
+        img.src = 'escudo.svg';
+    </script>
+</body>
+</html>
