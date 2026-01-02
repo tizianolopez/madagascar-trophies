@@ -37,9 +37,11 @@ async function loginToMeiland(): Promise<MeilandSession | null> {
     const cookies = loginPageRes.headers.get("set-cookie") || "";
     const loginPageHtml = await loginPageRes.text();
 
-    // Extract CSRF token if present
-    const csrfMatch = loginPageHtml.match(/name="_csrf"\s+value="([^"]+)"/);
+    // Extract CSRF token - Meiland uses "_csrf-backend"
+    const csrfMatch = loginPageHtml.match(/name="_csrf-backend"\s+value="([^"]+)"/);
     const csrfToken = csrfMatch ? csrfMatch[1] : "";
+
+    console.log("CSRF token found:", csrfToken ? "YES" : "NO");
 
     // Perform login
     const formData = new URLSearchParams();
@@ -47,7 +49,7 @@ async function loginToMeiland(): Promise<MeilandSession | null> {
     formData.append("LoginForm[password]", MEILAND_PASSWORD);
     formData.append("LoginForm[rememberMe]", "1");
     if (csrfToken) {
-      formData.append("_csrf", csrfToken);
+      formData.append("_csrf-backend", csrfToken);
     }
 
     const loginRes = await fetch(`${MEILAND_BASE}/app/user/login`, {

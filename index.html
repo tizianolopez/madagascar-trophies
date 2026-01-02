@@ -4203,23 +4203,36 @@
         }
 
         function goToDashboardIfNeeded() {
+            console.log('[DASHBOARD] goToDashboardIfNeeded() llamado');
+            
             const loginView = document.getElementById('login-view');
-            if (loginView && loginView.classList.contains('active')) return;
+            if (loginView && loginView.classList.contains('active')) {
+                console.log('[DASHBOARD] Modal de login activo, cancelando');
+                return;
+            }
 
             const shell = document.getElementById('app-shell');
             const landing = document.getElementById('landing-page');
-            if (!landing || !shell) return;
+            if (!landing || !shell) {
+                console.error('[DASHBOARD] No se encontraron elementos necesarios');
+                return;
+            }
 
             // If animation is already playing (fade-out present), let it finish.
-            if (landing.classList.contains('fade-out')) return;
+            if (landing.classList.contains('fade-out')) {
+                console.log('[DASHBOARD] Animación en progreso, esperando...');
+                return;
+            }
 
             // Already showing app shell
             if (!shell.classList.contains('hidden')) {
+                console.log('[DASHBOARD] App shell ya visible');
                 return;
             }
 
             // Check if we should animate (e.g. returning from Google Login)
             if (sessionStorage.getItem('madagascar_login_transition') === 'true') {
+                console.log('[DASHBOARD] Transición de login detectada, animando...');
                 sessionStorage.removeItem('madagascar_login_transition');
                 // Animate transition
                 landing.classList.add('fade-out');
@@ -4227,6 +4240,7 @@
                     showDashboardInstant();
                 }, 800);
             } else {
+                console.log('[DASHBOARD] Sesión existente, mostrando dashboard directamente');
                 // On refresh / existing session, skip the landing animation.
                 showDashboardInstant();
             }
@@ -4234,6 +4248,8 @@
 
         // --- INIT ---
         window.onload = async () => {
+            console.log('[INIT] App cargada, inicializando...');
+            
             // 1) Load generic local (fast). If we later detect a session, we switch to the per-user key.
             currentUserId = null;
             loadLocalProgress();
@@ -4241,11 +4257,15 @@
             // 2) Wire auth changes (Google redirect + refresh)
             if (supabaseClient) {
                 supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                    console.log('[AUTH] Estado de autenticación cambió:', event, session ? 'con sesión' : 'sin sesión');
+                    
                     if (session && session.user) {
+                        console.log('[AUTH] Usuario autenticado:', session.user.email);
                         await hydrateUserSession(session);
                         // If user is signed in, go to dashboard automatically
                         goToDashboardIfNeeded();
                     } else {
+                        console.log('[AUTH] No hay sesión, mostrando landing');
                         currentUserId = null;
                         updateUserBadge(null);
                         logoutInProgress = false; // <-- Siempre limpiar el flag
@@ -4254,27 +4274,37 @@
                 });
 
                 try {
+                    console.log('[INIT] Verificando sesión existente...');
                     const { data: { session } } = await supabaseClient.auth.getSession();
                     if (session && session.user) {
+                        console.log('[INIT] Sesión existente encontrada:', session.user.email);
                         await hydrateUserSession(session);
                         goToDashboardIfNeeded();
                     } else {
+                        console.log('[INIT] No hay sesión existente, mostrando landing');
                         // No session: this tab should start on landing
                         showLandingInstant();
                     }
                 } catch (err) {
-                    console.warn('Initial getSession failed, starting on landing:', err);
+                    console.error('[INIT] Error al verificar sesión inicial:', err);
                     showLandingInstant();
                 }
+            } else {
+                console.error('[INIT] Supabase client no inicializado');
             }
         };
 
         async function logout() {
-            if (logoutInProgress) return;
+            console.log('[LOGOUT] Iniciando logout...');
+            if (logoutInProgress) {
+                console.warn('[LOGOUT] Ya hay un logout en progreso, cancelando');
+                return;
+            }
             logoutInProgress = true;
 
             // Failsafe: nunca dejar la UI bloqueada por este flag.
             const logoutFailsafe = setTimeout(() => {
+                console.warn('[LOGOUT] Failsafe activado - limpiando flag');
                 logoutInProgress = false;
             }, 2000);
 
@@ -4286,6 +4316,7 @@
 
             // Clear local storage for this user to prevent data leak to next user
             if (currentUserId) {
+                console.log('[LOGOUT] Limpiando datos de usuario:', currentUserId);
                 localStorage.removeItem(getLocalProgressKey());
             }
             userProgress = {};
@@ -4301,59 +4332,47 @@
 
             // Trigger Supabase logout in background (don't await to keep UI snappy)
             if (supabaseClient) {
-                supabaseClient.auth.signOut().catch(err => console.warn('Logout warning:', err));
+                console.log('[LOGOUT] Cerrando sesión de Supabase...');
+                supabaseClient.auth.signOut().catch(err => console.warn('[LOGOUT] Error al cerrar sesión:', err));
             }
 
-            const dash = document.getElementById('dashboard-page');
+            // Use new app-shell instead of old dashboard-page
+            const shell = document.getElementById('app-shell');
             const landing = document.getElementById('landing-page');
-            if (!dash || !landing) {
+            if (!shell || !landing) {
+                console.error('[LOGOUT] No se encontraron elementos app-shell o landing-page');
                 logoutInProgress = false;
                 return;
             }
 
-            // Animación de salida del Dashboard (inversa a la entrada)
-            dash.style.transition = 'opacity 0.6s var(--ease-premium), transform 0.6s var(--ease-premium)';
-            dash.style.opacity = '0';
-            dash.style.transform = 'translateY(30px)';
+            console.log('[LOGOUT] Ocultando app-shell y mostrando landing...');
+            
+            // Hide app shell immediately
+            hideAppShell();
 
-            setTimeout(() => {
-                // Ocultar Dashboard
-                dash.classList.remove('fade-in');
-                dash.classList.add('hidden');
+            // Show landing
+            landing.classList.remove('hidden', 'fade-out');
 
-                // Mostrar Landing
-                landing.classList.remove('hidden');
+            // Resetear scroll arriba
+            window.scrollTo(0, 0);
 
-                // Forzar repintado (reflow) para reiniciar animación CSS
-                void landing.offsetWidth;
+            // Resetear la tarjeta de login si se quedó girada en Sign Up
+            const flipCard = document.getElementById('login-card-inner');
+            if (flipCard && flipCard.classList.contains('flipped')) {
+                flipCard.classList.remove('flipped');
+            }
 
-                // Quitar clase fade-out para que vuelva a opacidad 1
-                landing.classList.remove('fade-out');
+            // Asegurar overlay cerrado
+            const loginView = document.getElementById('login-view');
+            if (loginView) {
+                loginView.classList.remove('active');
+                loginView.style.opacity = '';
+            }
+            document.body.classList.remove('modal-open');
 
-                // Resetear scroll arriba
-                window.scrollTo(0, 0);
-
-                // Resetear la tarjeta de login si se quedó girada en Sign Up
-                const flipCard = document.getElementById('login-card-inner');
-                if (flipCard && flipCard.classList.contains('flipped')) {
-                    flipCard.classList.remove('flipped');
-                }
-
-                // Asegurar overlay cerrado
-                const loginView = document.getElementById('login-view');
-                if (loginView) {
-                    loginView.classList.remove('active');
-                    loginView.style.opacity = '';
-                }
-                document.body.classList.remove('modal-open');
-
-                // Clean inline transition overrides
-                dash.style.opacity = '';
-                dash.style.transform = '';
-
-                clearTimeout(logoutFailsafe);
-                logoutInProgress = false;
-            }, 600);
+            clearTimeout(logoutFailsafe);
+            logoutInProgress = false;
+            console.log('[LOGOUT] Logout completado');
         }
 
         // --- NAVIGATION & AUTH UI ---
@@ -4369,14 +4388,17 @@
                 if (supabaseClient) {
                     const { data: { session } } = await supabaseClient.auth.getSession();
                     if (session && session.user) {
-                        switchPage('dashboard');
+                        console.log('[LOGIN] Sesión activa detectada, redirigiendo al dashboard');
+                        goToDashboardIfNeeded();
                         return;
                     }
+                    console.log('[LOGIN] No hay sesión activa, abriendo modal de login');
                 }
             } catch (err) {
-                console.warn('getSession failed, opening login modal anyway:', err);
+                console.warn('[LOGIN] getSession falló, abriendo modal de login:', err);
             }
 
+            console.log('[LOGIN] Abriendo modal de login...');
             document.body.classList.add('modal-open');
             if (loginView) loginView.classList.add('active');
         }
@@ -4527,30 +4549,10 @@
         let switchPageTimer = null;
 
         function switchPage(page) {
+            console.log('[SWITCH] switchPage() llamado con:', page);
             if (page === 'dashboard') {
-                const landing = document.getElementById('landing-page');
-                const dash = document.getElementById('dashboard-page');
-
-                // Precargar sonidos justo antes de mostrar el dashboard
-                preloadSounds();
-
-                // 1. Iniciar fade out del Landing
-                landing.classList.add('fade-out');
-
-                // 2. Esperar animación de salida (1.5s)
-                if (switchPageTimer) clearTimeout(switchPageTimer);
-                switchPageTimer = setTimeout(() => {
-                    landing.classList.add('hidden');
-                    dash.classList.remove('hidden');
-
-                    // 3. Pequeña pausa para asegurar renderizado y fade in
-                    setTimeout(() => {
-                        dash.classList.add('fade-in');
-                        renderDashboard();
-                        window.scrollTo(0, 0);
-                    }, 50);
-
-                }, 1500); // Sincronizado con CSS 1.5s
+                // Use the new navigation system
+                goToDashboardIfNeeded();
             }
         }
 
