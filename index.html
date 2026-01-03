@@ -33,18 +33,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // Keep the same view on refresh (per-tab) without flashing the landing.
-        // We use sessionStorage so it does NOT affect other browser tabs.
-        (function () {
-            try {
-                if (sessionStorage.getItem('madagascar_view_v1') === 'dashboard') {
-                    document.documentElement.classList.add('start-dashboard');
-                }
-            } catch (_) {
-                // ignore
-            }
-        })();
-
         // Ensure these globals exist immediately (prevents "openLogin is not defined" if user clicks fast)
         window.openLogin = window.openLogin || function () {
             const loginView = document.getElementById('login-view');
@@ -277,18 +265,22 @@
             display: none !important;
         }
 
-        /* Start directly in dashboard (avoid landing flash on refresh) */
-        html.start-dashboard #landing-page {
+        /* Estado inicial: landing visible, app-shell oculto */
+        #landing-page {
+            display: block;
+        }
+        
+        #app-shell {
+            display: none;
+        }
+        
+        /* Cuando está autenticado: ocultar landing, mostrar app-shell */
+        body.authenticated #landing-page {
             display: none !important;
         }
-
-        html.start-dashboard #dashboard-page.hidden {
-            display: block !important;
-        }
-
-        html.start-dashboard #dashboard-page {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
+        
+        body.authenticated #app-shell {
+            display: flex !important;
         }
 
         /* ============================
@@ -563,41 +555,7 @@
             transform: scale(0.98);
         }
 
-        /* Sync Button */
-        .btn-sync {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
 
-        .btn-sync:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.25);
-        }
-
-        .btn-sync.syncing {
-            color: #9b59b6;
-            pointer-events: none;
-        }
-
-        .btn-sync.syncing .ph-arrows-clockwise {
-            animation: spin 1s linear infinite;
-        }
-
-        .btn-sync.success {
-            color: #2ecc71;
-            border-color: rgba(46, 204, 113, 0.3);
-        }
 
         .btn-sync.error {
             color: #e74c3c;
@@ -2082,7 +2040,7 @@
     <!-- ============================
          APP SHELL (Solo visible cuando logueado)
          ============================ -->
-    <div id="app-shell" class="hidden">
+    <div id="app-shell">
         <!-- Sidebar (Desktop) -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -2135,15 +2093,9 @@
         <main class="main-content">
             <!-- PAGE: Home -->
             <div id="page-home" class="page active">
-                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <h2>🏠 Home</h2>
-                        <p>Bienvenido a MadagascarFC</p>
-                    </div>
-                    <button class="btn-sync" onclick="syncWithMeiland()" title="Sincronizar con Liga Meiland">
-                        <i class="ph-bold ph-arrows-clockwise" id="sync-icon"></i>
-                        <span id="sync-status">Sync</span>
-                    </button>
+                <div class="page-header">
+                    <h2>🏠 Home</h2>
+                    <p>Bienvenido a MadagascarFC</p>
                 </div>
                 <div id="home-content">
                     <div class="card">
@@ -2623,6 +2575,7 @@
         }
 
         function loadPageContent(page) {
+            console.log('[NAV] Cargando contenido de página:', page);
             switch(page) {
                 case 'home':
                     renderHomePage();
@@ -2667,11 +2620,8 @@
 
         // Show app shell (after login)
         function showAppShell() {
-            const shell = document.getElementById('app-shell');
-            const landing = document.getElementById('landing-page');
-            
-            if (shell) shell.classList.remove('hidden');
-            if (landing) landing.classList.add('hidden');
+            console.log('[UI] Mostrando app shell');
+            document.body.classList.add('authenticated');
             
             // Check URL for initial page
             const urlParams = new URLSearchParams(window.location.search);
@@ -2681,12 +2631,11 @@
 
         // Hide app shell (after logout)
         function hideAppShell() {
-            const shell = document.getElementById('app-shell');
-            const landing = document.getElementById('landing-page');
+            console.log('[UI] Ocultando app shell');
+            document.body.classList.remove('authenticated');
             
-            if (shell) shell.classList.add('hidden');
+            const landing = document.getElementById('landing-page');
             if (landing) {
-                landing.classList.remove('hidden');
                 landing.classList.remove('fade-out');
             }
         }
@@ -2722,70 +2671,8 @@
         }
 
         // =============================
-        // MEILAND SYNC
+        // TOAST NOTIFICATIONS
         // =============================
-        async function syncWithMeiland() {
-            const btn = document.querySelector('.btn-sync');
-            const statusEl = document.getElementById('sync-status');
-            
-            if (!btn || btn.classList.contains('syncing')) return;
-
-            btn.classList.remove('success', 'error');
-            btn.classList.add('syncing');
-            statusEl.textContent = 'Sincronizando...';
-
-            try {
-                // Call the Edge Function
-                const response = await fetch(
-                    `${SUPABASE_URL}/functions/v1/sync-meiland`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${SUPABASE_KEY}`,
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
-
-                const result = await response.json();
-
-                if (response.ok && result.success) {
-                    btn.classList.remove('syncing');
-                    btn.classList.add('success');
-                    statusEl.textContent = '✓ Sync OK';
-                    
-                    // Refresh all data
-                    loadHomeData();
-                    loadStatsData();
-                    loadCalendarData();
-                    
-                    // Show success notification
-                    showToast(`Sincronizado: ${result.data.players} jugadores, ${result.data.standings} equipos, ${result.data.matches} partidos`);
-                    
-                    // Reset button after 3 seconds
-                    setTimeout(() => {
-                        btn.classList.remove('success');
-                        statusEl.textContent = 'Sync';
-                    }, 3000);
-                } else {
-                    throw new Error(result.error || 'Sync failed');
-                }
-            } catch (err) {
-                console.error('Meiland sync error:', err);
-                btn.classList.remove('syncing');
-                btn.classList.add('error');
-                statusEl.textContent = '✗ Error';
-                
-                // For now, show manual sync option since Edge Function may not be deployed
-                showToast('Para sincronizar, despliega primero la Edge Function de Supabase', 'error');
-                
-                setTimeout(() => {
-                    btn.classList.remove('error');
-                    statusEl.textContent = 'Sync';
-                }, 3000);
-            }
-        }
-
         // Simple toast notification
         function showToast(message, type = 'success') {
             // Remove existing toast
@@ -2814,6 +2701,7 @@
             if (!supabaseClient) return;
 
             try {
+                console.log('[HOME] Cargando datos...');
                 // Load all data in parallel for performance
                 const [matchesResult, activityResult, announcementsResult] = await Promise.all([
                     supabaseClient
@@ -2884,7 +2772,7 @@
                     </div>
                     <div class="match-info">
                         <div class="match-date">${dateStr}</div>
-                        <div class="match-time">${match.match_time ? match.match_time.slice(0,5) : 'TBD'} ${match.is_home ? '🏠 Casa' : '🚗 Fuera'}</div>
+                        <div class="match-time">${match.match_time ? match.match_time.slice(0,5) : 'TBD'}</div>
                         ${match.location ? `<div class="match-time">📍 ${match.location}</div>` : ''}
                     </div>
                 </div>
@@ -2964,9 +2852,6 @@
                             ${a.content ? `<p style="color: var(--text-muted); font-size: 0.85rem;">${a.content}</p>` : ''}
                             <span class="time">por ${a.author_name || 'Anónimo'} · ${getTimeAgo(new Date(a.created_at))}</span>
                         </div>
-                        <button onclick="deleteAnnouncement('${a.id}')" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 8px;">
-                            <i class="ph ph-trash"></i>
-                        </button>
                     </div>
                 `).join('')}
             `;
@@ -3128,42 +3013,57 @@
             loadStatsData();
         }
 
+        // Cache de datos para evitar recargas constantes
+        let cachedPlayers = null;
+        let cachedMatches = null;
+        let cachedStandings = null;
+        let lastCacheTime = null;
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+        function isCacheValid() {
+            return lastCacheTime && (Date.now() - lastCacheTime < CACHE_DURATION);
+        }
+
+        function invalidateCache() {
+            console.log('[CACHE] Invalidando cache');
+            cachedPlayers = null;
+            cachedMatches = null;
+            cachedStandings = null;
+            lastCacheTime = null;
+        }
+
         async function loadStatsData() {
             if (!supabaseClient) return;
 
             try {
-                // Get players with their aggregated stats
-                const { data: players, error } = await supabaseClient
-                    .from('players')
-                    .select('*')
-                    .eq('is_active', true)
-                    .order('jersey_number', { ascending: true });
+                // Usar cache si está disponible
+                let players = cachedPlayers;
+                
+                if (!players || !isCacheValid()) {
+                    console.log('[STATS] Cargando jugadores desde Supabase...');
+                    const { data, error } = await supabaseClient
+                        .from('players')
+                        .select('*')
+                        .order('name', { ascending: true });
 
-                if (error) throw error;
+                    if (error) throw error;
+                    players = data || [];
+                    cachedPlayers = players;
+                    lastCacheTime = Date.now();
+                } else {
+                    console.log('[STATS] Usando jugadores desde cache');
+                }
 
-                // Get aggregated stats per player
-                const { data: stats } = await supabaseClient
-                    .from('player_stats')
-                    .select('player_id, goals, assists, yellow_cards, red_cards, minutes_played');
-
-                // Aggregate stats by player
-                const statsMap = {};
-                (stats || []).forEach(s => {
-                    if (!statsMap[s.player_id]) {
-                        statsMap[s.player_id] = { goals: 0, assists: 0, yellows: 0, reds: 0, minutes: 0, matches: 0 };
-                    }
-                    statsMap[s.player_id].goals += s.goals || 0;
-                    statsMap[s.player_id].assists += s.assists || 0;
-                    statsMap[s.player_id].yellows += s.yellow_cards || 0;
-                    statsMap[s.player_id].reds += s.red_cards || 0;
-                    statsMap[s.player_id].minutes += s.minutes_played || 0;
-                    statsMap[s.player_id].matches++;
-                });
-
-                // Enrich players with stats
-                const enrichedPlayers = (players || []).map(p => ({
+                // Usar stats directamente de la tabla players
+                const enrichedPlayers = players.map(p => ({
                     ...p,
-                    stats: statsMap[p.id] || { goals: 0, assists: 0, yellows: 0, reds: 0, minutes: 0, matches: 0 }
+                    stats: {
+                        goals: p.goals || 0,
+                        assists: p.assists || 0,
+                        yellows: p.yellow_cards || 0,
+                        reds: p.red_cards || 0,
+                        matches: p.games_played || 0
+                    }
                 }));
 
                 renderScorersTable(enrichedPlayers);
@@ -3208,7 +3108,7 @@
                                 </td>
                                 <td style="text-align: center; font-weight: 600; color: var(--accent-glow);">${p.stats.goals}</td>
                                 <td style="text-align: center; color: var(--text-muted);">${p.stats.matches}</td>
-                                <td style="text-align: center; color: var(--text-muted);">${p.stats.matches ? (p.stats.goals / p.stats.matches).toFixed(2) : '0.00'}</td>
+                                <td style="text-align: center; color: var(--text-muted);">${p.stats.matches > 0 ? (p.stats.goals / p.stats.matches).toFixed(2) : '0.00'}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -3275,7 +3175,6 @@
                             <th style="text-align: center;">⚽</th>
                             <th style="text-align: center;">🅰️</th>
                             <th style="text-align: center;">🟨</th>
-                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -3287,11 +3186,6 @@
                                 <td style="text-align: center;">${p.stats.goals}</td>
                                 <td style="text-align: center;">${p.stats.assists}</td>
                                 <td style="text-align: center;">${p.stats.yellows}${p.stats.reds ? `/<span style="color: #e74c3c;">${p.stats.reds}</span>` : ''}</td>
-                                <td>
-                                    <button onclick="deletePlayer('${p.id}')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
-                                        <i class="ph ph-trash"></i>
-                                    </button>
-                                </td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -3418,25 +3312,42 @@
             try {
                 const today = new Date().toISOString().split('T')[0];
 
-                // Load matches and standings in parallel
-                const [matchesResult, standingsResult] = await Promise.all([
-                    supabaseClient
-                        .from('matches')
-                        .select('*')
-                        .order('match_date', { ascending: true }),
-                    supabaseClient
-                        .from('standings')
-                        .select('*')
-                        .order('position', { ascending: true })
-                ]);
+                let matches = cachedMatches;
+                let standings = cachedStandings;
 
-                const matches = matchesResult.data || [];
-                const upcoming = matches.filter(m => m.match_date >= today);
-                const past = matches.filter(m => m.match_date < today).reverse();
+                // Cargar desde Supabase solo si no hay cache o está expirado
+                if (!matches || !standings || !isCacheValid()) {
+                    console.log('[CALENDAR] Cargando datos desde Supabase...');
+                    const [matchesResult, standingsResult] = await Promise.all([
+                        supabaseClient
+                            .from('matches')
+                            .select('*')
+                            .order('match_date', { ascending: true }),
+                        supabaseClient
+                            .from('standings')
+                            .select('*')
+                            .order('position', { ascending: true })
+                    ]);
+                    
+                    matches = matchesResult.data || [];
+                    standings = standingsResult.data || [];
+                    cachedMatches = matches;
+                    cachedStandings = standings;
+                    lastCacheTime = Date.now();
+                } else {
+                    console.log('[CALENDAR] Usando datos desde cache');
+                }
+
+                // Usar variables locales en lugar de .data
+                const matchesData = matches;
+                const standingsData = standings;
+
+                const upcoming = matchesData.filter(m => m.match_date >= today);
+                const past = matchesData.filter(m => m.match_date < today).reverse();
 
                 renderMatchesList(upcoming);
                 renderPastMatches(past);
-                renderStandingsTable(standingsResult.data || []);
+                renderStandingsTable(standingsData);
 
             } catch (err) {
                 console.error('Error loading calendar:', err);
@@ -3465,17 +3376,11 @@
                     <div class="match-card" style="margin-bottom: 12px; padding: 12px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <strong>${m.is_home ? 'Madagascar FC' : m.opponent}</strong>
-                                <span style="color: var(--text-muted); margin: 0 8px;">vs</span>
-                                <strong>${m.is_home ? m.opponent : 'Madagascar FC'}</strong>
+                                <strong>Madagascar FC vs ${m.opponent}</strong>
                             </div>
-                            <button onclick="deleteMatch('${m.id}')" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">
-                                <i class="ph ph-trash"></i>
-                            </button>
                         </div>
                         <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;">
                             📅 ${dateStr} ${m.match_time ? `· ${m.match_time.slice(0,5)}` : ''}
-                            ${m.is_home ? ' · 🏠 Casa' : ' · 🚗 Fuera'}
                             ${m.location ? ` · 📍 ${m.location}` : ''}
                             ${m.competition ? ` · 🏆 ${m.competition}` : ''}
                         </div>
@@ -3499,20 +3404,44 @@
                 const isWin = hasScore && m.goals_for > m.goals_against;
                 const isDraw = hasScore && m.goals_for === m.goals_against;
                 const resultColor = isWin ? '#2ecc71' : isDraw ? '#f39c12' : '#e74c3c';
+                
+                // Parse scorers from JSON
+                let madagascarScorers = [];
+                let rivalScorers = [];
+                if (m.notes) {
+                    try {
+                        const scorersData = JSON.parse(m.notes);
+                        madagascarScorers = scorersData.madagascar_scorers || [];
+                        rivalScorers = scorersData.rival_scorers || [];
+                    } catch (e) {
+                        // Legacy format or invalid JSON
+                    }
+                }
+                
+                const madagascarNames = madagascarScorers.map(s => `${s.name} (${s.goals})`).join(', ');
+                const rivalNames = rivalScorers.map(s => `${s.name} (${s.goals})`).join(', ');
 
                 return `
-                    <div class="match-card" style="margin-bottom: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span style="color: var(--text-muted); font-size: 0.8rem;">${dateStr}</span>
-                            <span style="margin-left: 8px;">${m.is_home ? 'vs' : '@'} ${m.opponent}</span>
-                        </div>
-                        ${hasScore ? `
-                            <div style="font-weight: 600; color: ${resultColor};">
-                                ${m.goals_for} - ${m.goals_against}
+                    <div class="match-card" style="margin-bottom: 12px; padding: 12px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <div>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">${dateStr}</span>
+                                <span style="margin-left: 8px; font-weight: 500;">vs ${m.opponent}</span>
                             </div>
-                        ` : `
-                            <button onclick="openAddResultModal('${m.id}', '${m.opponent}')" class="btn-small">Añadir resultado</button>
-                        `}
+                            ${hasScore ? `
+                                <div style="font-weight: 600; color: ${resultColor}; font-size: 1.1rem;">
+                                    ${m.goals_for} - ${m.goals_against}
+                                </div>
+                            ` : `
+                                <button onclick="openAddResultModal('${m.id}', '${m.opponent}')" class="btn-small">Añadir resultado</button>
+                            `}
+                        </div>
+                        ${madagascarNames || rivalNames ? `
+                            <div style="font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; margin-top: 8px;">
+                                ${madagascarNames ? `<div style="margin-bottom: 4px;"><strong style="color: #9b59b6;">🟣 Madagascar:</strong> ${madagascarNames}</div>` : ''}
+                                ${rivalNames ? `<div><strong style="color: var(--text-primary);">⚽ ${m.opponent}:</strong> ${rivalNames}</div>` : ''}
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             }).join('');
@@ -4178,26 +4107,16 @@
         }
 
         function showDashboardInstant() {
-            const landing = document.getElementById('landing-page');
+            console.log('[UI] showDashboardInstant()');
             
-            try {
-                sessionStorage.setItem('madagascar_view_v1', 'dashboard');
-            } catch (_) { }
-
             preloadSounds();
-
-            // Use new app shell
             showAppShell();
             window.scrollTo(0, 0);
         }
 
         function showLandingInstant() {
-            try {
-                sessionStorage.setItem('madagascar_view_v1', 'landing');
-            } catch (_) { }
-            document.documentElement.classList.remove('start-dashboard');
-
-            // Use new app shell
+            console.log('[UI] showLandingInstant()');
+            
             hideAppShell();
             window.scrollTo(0, 0);
         }
@@ -4207,162 +4126,115 @@
             
             const loginView = document.getElementById('login-view');
             if (loginView && loginView.classList.contains('active')) {
-                console.log('[DASHBOARD] Modal de login activo, cancelando');
-                return;
+                console.log('[DASHBOARD] Modal de login activo, cerrando modal');
+                dismissLogin();
             }
 
-            const shell = document.getElementById('app-shell');
             const landing = document.getElementById('landing-page');
-            if (!landing || !shell) {
-                console.error('[DASHBOARD] No se encontraron elementos necesarios');
+            if (!landing) {
+                console.error('[DASHBOARD] No se encontró landing-page');
                 return;
             }
 
-            // If animation is already playing (fade-out present), let it finish.
+            // Already authenticated
+            if (document.body.classList.contains('authenticated')) {
+                console.log('[DASHBOARD] App shell ya visible');
+                return;
+            }
+
+            // If animation is already playing, let it finish
             if (landing.classList.contains('fade-out')) {
                 console.log('[DASHBOARD] Animación en progreso, esperando...');
                 return;
             }
 
-            // Already showing app shell
-            if (!shell.classList.contains('hidden')) {
-                console.log('[DASHBOARD] App shell ya visible');
-                return;
-            }
-
-            // Check if we should animate (e.g. returning from Google Login)
-            if (sessionStorage.getItem('madagascar_login_transition') === 'true') {
-                console.log('[DASHBOARD] Transición de login detectada, animando...');
-                sessionStorage.removeItem('madagascar_login_transition');
-                // Animate transition
-                landing.classList.add('fade-out');
-                setTimeout(() => {
-                    showDashboardInstant();
-                }, 800);
-            } else {
-                console.log('[DASHBOARD] Sesión existente, mostrando dashboard directamente');
-                // On refresh / existing session, skip the landing animation.
-                showDashboardInstant();
-            }
+            console.log('[DASHBOARD] Mostrando dashboard');
+            // Always show instantly (no animation on refresh)
+            showDashboardInstant();
         }
 
         // --- INIT ---
+        let authInitialized = false;
+        
         window.onload = async () => {
             console.log('[INIT] App cargada, inicializando...');
             
-            // 1) Load generic local (fast). If we later detect a session, we switch to the per-user key.
+            // 1) Load generic local (fast)
             currentUserId = null;
             loadLocalProgress();
 
-            // 2) Wire auth changes (Google redirect + refresh)
+            // 2) Check for existing session FIRST (before setting up listener)
             if (supabaseClient) {
-                supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                    console.log('[AUTH] Estado de autenticación cambió:', event, session ? 'con sesión' : 'sin sesión');
-                    
-                    if (session && session.user) {
-                        console.log('[AUTH] Usuario autenticado:', session.user.email);
-                        await hydrateUserSession(session);
-                        // If user is signed in, go to dashboard automatically
-                        goToDashboardIfNeeded();
-                    } else {
-                        console.log('[AUTH] No hay sesión, mostrando landing');
-                        currentUserId = null;
-                        updateUserBadge(null);
-                        logoutInProgress = false; // <-- Siempre limpiar el flag
-                        showLandingInstant();
-                    }
-                });
-
                 try {
                     console.log('[INIT] Verificando sesión existente...');
                     const { data: { session } } = await supabaseClient.auth.getSession();
+                    
                     if (session && session.user) {
                         console.log('[INIT] Sesión existente encontrada:', session.user.email);
                         await hydrateUserSession(session);
-                        goToDashboardIfNeeded();
+                        showDashboardInstant();
+                        authInitialized = true;
                     } else {
-                        console.log('[INIT] No hay sesión existente, mostrando landing');
-                        // No session: this tab should start on landing
+                        console.log('[INIT] No hay sesión existente');
                         showLandingInstant();
+                        authInitialized = true;
                     }
                 } catch (err) {
                     console.error('[INIT] Error al verificar sesión inicial:', err);
                     showLandingInstant();
+                    authInitialized = true;
                 }
+
+                // 3) Setup auth state listener (for login/logout events)
+                supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                    console.log('[AUTH] Estado cambió:', event, session ? 'con sesión' : 'sin sesión');
+                    
+                    // Skip initial SIGNED_IN event if we already handled it
+                    if (!authInitialized || event !== 'INITIAL_SESSION') {
+                        if (session && session.user) {
+                            console.log('[AUTH] Usuario autenticado:', session.user.email);
+                            await hydrateUserSession(session);
+                            goToDashboardIfNeeded();
+                        } else {
+                            console.log('[AUTH] Sesión cerrada');
+                            currentUserId = null;
+                            updateUserBadge(null);
+                            updateSidebarUser(null);
+                            logoutInProgress = false;
+                            showLandingInstant();
+                        }
+                    }
+                });
             } else {
                 console.error('[INIT] Supabase client no inicializado');
+                showLandingInstant();
             }
         };
 
         async function logout() {
             console.log('[LOGOUT] Iniciando logout...');
             if (logoutInProgress) {
-                console.warn('[LOGOUT] Ya hay un logout en progreso, cancelando');
+                console.warn('[LOGOUT] Ya hay un logout en progreso, ignorando');
                 return;
             }
             logoutInProgress = true;
 
-            // Failsafe: nunca dejar la UI bloqueada por este flag.
-            const logoutFailsafe = setTimeout(() => {
-                console.warn('[LOGOUT] Failsafe activado - limpiando flag');
-                logoutInProgress = false;
-            }, 2000);
+            // Invalidar cache
+            invalidateCache();
 
-            // Cancel any pending login transition
-            if (switchPageTimer) {
-                clearTimeout(switchPageTimer);
-                switchPageTimer = null;
-            }
-
-            // Clear local storage for this user to prevent data leak to next user
+            // Clear local storage for this user
             if (currentUserId) {
                 console.log('[LOGOUT] Limpiando datos de usuario:', currentUserId);
                 localStorage.removeItem(getLocalProgressKey());
             }
             userProgress = {};
 
-            // Immediately clear local session state so UI is responsive
+            // Clear session state
             currentUserId = null;
             updateUserBadge(null);
+            updateSidebarUser(null);
 
-            try {
-                sessionStorage.setItem('madagascar_view_v1', 'landing');
-            } catch (_) { }
-            document.documentElement.classList.remove('start-dashboard');
-
-            // Trigger Supabase logout in background (don't await to keep UI snappy)
-            if (supabaseClient) {
-                console.log('[LOGOUT] Cerrando sesión de Supabase...');
-                supabaseClient.auth.signOut().catch(err => console.warn('[LOGOUT] Error al cerrar sesión:', err));
-            }
-
-            // Use new app-shell instead of old dashboard-page
-            const shell = document.getElementById('app-shell');
-            const landing = document.getElementById('landing-page');
-            if (!shell || !landing) {
-                console.error('[LOGOUT] No se encontraron elementos app-shell o landing-page');
-                logoutInProgress = false;
-                return;
-            }
-
-            console.log('[LOGOUT] Ocultando app-shell y mostrando landing...');
-            
-            // Hide app shell immediately
-            hideAppShell();
-
-            // Show landing
-            landing.classList.remove('hidden', 'fade-out');
-
-            // Resetear scroll arriba
-            window.scrollTo(0, 0);
-
-            // Resetear la tarjeta de login si se quedó girada en Sign Up
-            const flipCard = document.getElementById('login-card-inner');
-            if (flipCard && flipCard.classList.contains('flipped')) {
-                flipCard.classList.remove('flipped');
-            }
-
-            // Asegurar overlay cerrado
+            // Close any open modals
             const loginView = document.getElementById('login-view');
             if (loginView) {
                 loginView.classList.remove('active');
@@ -4370,7 +4242,27 @@
             }
             document.body.classList.remove('modal-open');
 
-            clearTimeout(logoutFailsafe);
+            // Reset login card
+            const flipCard = document.getElementById('login-card-inner');
+            if (flipCard && flipCard.classList.contains('flipped')) {
+                flipCard.classList.remove('flipped');
+            }
+
+            // Hide app shell and show landing FIRST (immediate UI feedback)
+            hideAppShell();
+            window.scrollTo(0, 0);
+
+            // THEN sign out from Supabase (this will trigger onAuthStateChange)
+            if (supabaseClient) {
+                console.log('[LOGOUT] Cerrando sesión de Supabase...');
+                try {
+                    await supabaseClient.auth.signOut();
+                    console.log('[LOGOUT] Sesión cerrada exitosamente');
+                } catch (err) {
+                    console.error('[LOGOUT] Error al cerrar sesión:', err);
+                }
+            }
+
             logoutInProgress = false;
             console.log('[LOGOUT] Logout completado');
         }
@@ -4408,25 +4300,22 @@
         }
 
         function closeLogin() {
-            const loginView = document.getElementById('login-view');
-            loginView.style.opacity = '0';
-            setTimeout(() => {
-                loginView.classList.remove('active');
-                document.body.classList.remove('modal-open');
-                setTimeout(() => { loginView.style.opacity = ''; }, 500);
-                switchPage('dashboard');
-            }, 500);
+            console.log('[LOGIN] Cerrando modal de login');
+            dismissLogin();
         }
 
         function dismissLogin() {
             const loginView = document.getElementById('login-view');
             if (!loginView) return;
+            
+            console.log('[LOGIN] Dismissing modal de login');
             loginView.style.opacity = '0';
+            
             setTimeout(() => {
                 loginView.classList.remove('active');
                 document.body.classList.remove('modal-open');
-                setTimeout(() => { loginView.style.opacity = ''; }, 500);
-            }, 500);
+                loginView.style.opacity = '';
+            }, 300);
         }
 
         // --- AUTH LOGIC ---
@@ -4531,9 +4420,16 @@
             try {
                 if (!supabaseClient) throw new Error("Supabase no configurado");
 
-                // Set flag for animated transition on return
-                sessionStorage.setItem('madagascar_login_transition', 'true');
+                // Verificar si ya hay sesión activa
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session && session.user) {
+                    console.log('[GOOGLE] Ya hay sesión activa, cerrando modal');
+                    dismissLogin();
+                    goToDashboardIfNeeded();
+                    return;
+                }
 
+                console.log('[GOOGLE] Iniciando login con Google...');
                 const { data, error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
@@ -4542,6 +4438,7 @@
                 });
                 if (error) throw error;
             } catch (err) {
+                console.error('[GOOGLE] Error:', err);
                 setActiveAuthError("Error con Google: " + err.message);
             }
         }
@@ -4561,7 +4458,6 @@
             checkPlatinum(true);
 
             const wrapper = document.getElementById('trophies-content');
-            if (!wrapper) return;
             if (!wrapper) return;
             wrapper.innerHTML = '';
 
